@@ -64,8 +64,8 @@ experiment main type: gui {
 		{
 			chart "Agent information"
 			{
-				data "Agents blue color" value:length(HelloAgent where (each.myColor = #blue));
-				data "Have met another blue" value:length(HelloAgent where (each.haveMet = true));
+				data "Agents blue color" value:length(FestivalGuest where (each.myColor = #blue));
+				data "Have met another blue" value:length(FestivalGuest where (each.haveMet = true));
 			}
 		}
 	}
