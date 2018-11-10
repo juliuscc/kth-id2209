@@ -1,55 +1,153 @@
 /**
 * Name: FestivalGuest
-* Author: hrabo
+* Author: hrabo, jcelik
 * Description: 
-* Tags: Tag1, Tag2, TagN
+* Tags: 
 */
 
 model Festival
 
+global {
+	init
+	{
+		// Make sure we get consistent behaviour
+		seed<-10.0;
+//		FestivalInformationCenter info_center <- nil
+		
+		
+		create FestivalGuest number: 10
+		{
+			location <- {rnd(100),rnd(100)};
+		}
+		
+//		FestivalInformationCenter info_center <- 
+		create FestivalInformationCenter number: 1 returns: information_centers
+		{
+			location <- {50, 50};
+		}
+		
+		
+		int add_dist <- 0;
+		int d_dist <- 60;
+		bool make_drink_store <- true;
+		create FestivalStore number: 2
+		{
+			location <- {10 + add_dist, 10 + add_dist};
+			add_dist <- add_dist + d_dist;
+			
+			if (make_drink_store)
+			{
+				hasDrinks <- true;
+				hasFood <- false;
+				myColor <- #blue;
+				
+			} else {
+				hasDrinks <- false;
+				hasFood <- true;
+				myColor <- #green;
+			}
+			
+			make_drink_store <- not make_drink_store;
+//			information_centers[1].addStore(self);
+		}
+	}
+//	reflex globalPrint
+//	{
+//		write "Step of simulation: " + time;
+//	}
+}
+
+species FestivalStore {
+	rgb myColor <- #blue;
+	
+	bool hasDrinks <- false;
+	bool hasFood <- false;
+	
+	aspect default{
+		draw cube(10) at: location color: myColor ;
+    }
+}
+
+species FestivalInformationCenter {
+	rgb myColor <- #yellow;
+	
+	list<FestivalStore> drink_stores;
+	list<FestivalStore> food_stores;
+	
+	aspect default{
+		draw cube(10) at: location color: myColor ;
+    }
+    
+}
+
 species FestivalGuest skills: [moving]{
 	rgb myColor <- #red;
 	
-	bool haveMet <- false;
-	
 	point target_point;
 	
-	reflex changeColor when: !haveMet {
-		myColor <- flip(0.5) ? #red : #blue;
-	}
+	int drink_level <- rnd(10);
+	int food_level <- rnd(10);
 	
-	reflex goToPoint when: myColor = #red and !haveMet
+	reflex beIdle when: target_point = nil
 	{
-		do goto target:target_point speed: 3.0;
-		if(location distance_to(target_point ) < 3)
-		{
-			target_point <- {rnd(100),rnd(100)};
-		}
+		do wander;
 	}
 	
-	reflex logBlueColor when: myColor = #blue and !haveMet {
-		write self.name + " says: I'm blue da ba dee da ba daa";
-		// Sqrt(50) = 7.07
-		ask HelloAgent at_distance 7.1
-		{
-			if(myself.myColor = #blue and self.myColor = #blue)
+	reflex go_to_target when: target_point != nil
+	{
+		do goto target:target_point;
+	}
+	
+	// Make sure the agent will do something when it gets thirsty
+	reflex inquire_resource_location when: (drink_level < 0 or food_level < 0) and (target_point = nil)
+	{
+		do goto target:{50,50};
+		ask FestivalInformationCenter at_distance 2 {
+			if(myself.drink_level < 0)
 			{
-				write "We are both blue!";
-				write "Agents managed to meet at time: "+ cycle;
-				self.haveMet <- true;
-				myself.haveMet <- true;
+//				myself.target_point <- self.get_drinks_location();
 			}
 		}
 	}
 	
+	// Enter store when we are close
+	reflex enter_store when: location distance_to(target_point) < 2
+	{
+	}
+	
+	// make more thirsty or hungry
+	reflex consume_resources when: drink_level > 0 and food_level > 0
+	{
+		// More hunger
+		if (flip(0.5)) {
+			food_level <- food_level - 1;
+		// More thirst
+		} else {
+			drink_level <- drink_level - 1;
+		}
+	}
+	
+//	reflex changeColor when: !haveMet {
+//		myColor <- flip(0.5) ? #red : #blue;
+//	}
+	
+//	reflex goToPoint when: myColor = #red and !haveMet
+//	{
+//		do goto target:target_point speed: 3.0;
+//		if(location distance_to(target_point ) < 3)
+//		{
+//			target_point <- {rnd(100),rnd(100)};
+//		}
+//	}
+	
 	aspect default{
-    	draw sphere(2) at: location color: myColor ;
-		if(!haveMet)
-    	{
-    		draw box(2,2,2) at: target_point color: #black;
-    		draw line([location,target_point]) color:#black;
-    	}
-    	draw cylinder(7.1,1) at:{location.x,location.y, location.z-3} color: # green;
+		draw pyramid(3) at: {location.x, location.y, 0} color: myColor;
+    	draw sphere(1.5) at: {location.x, location.y, 3} color: myColor;
+//		if(!haveMet)
+//    	{
+//    		draw box(2,2,2) at: target_point color: #black;
+//    		draw line([location,target_point]) color:#black;
+//    	}
     }
 }
 
@@ -59,15 +157,17 @@ experiment main type: gui {
 		display map type: opengl 
 		{
 			species FestivalGuest;
+			species FestivalStore;
+			species FestivalInformationCenter;
 		}
-		display chart
-		{
-			chart "Agent information"
-			{
-				data "Agents blue color" value:length(FestivalGuest where (each.myColor = #blue));
-				data "Have met another blue" value:length(FestivalGuest where (each.haveMet = true));
-			}
-		}
+//		display chart
+//		{
+//			chart "Agent information"
+//			{
+//				data "Agents blue color" value:length(FestivalGuest where (each.myColor = #blue));
+//				data "Have met another blue" value:length(FestivalGuest where (each.haveMet = true));
+//			}
+//		}
 	}
 }
 
