@@ -104,7 +104,17 @@ species FestivalGuest skills: [moving] {
 	
 	reflex go_to_target when: target_point != nil
 	{
-		do goto target:target_point;
+		if (location distance_to(target_point) < 2) {
+			if (drink_level <= 0) {
+				drink_level <- 10;
+			} else {
+				food_level <- 10;
+			}
+			
+			target_point <- nil;
+		} else {
+			do goto target:target_point;
+		}
 	}
 	
 	// Make sure the agent will do something when it gets thirsty
@@ -112,9 +122,14 @@ species FestivalGuest skills: [moving] {
 	{
 		do goto target:{50,50};
 		ask FestivalInformationCenter at_distance 2 {
-			if(myself.drink_level <= 0)
-			{
-//				myself.target_point <- self.get_drinks_location();
+			if(myself.drink_level <= 0) {
+				int count <- length(self.drink_stores);
+				int index <- rnd(count - 1);
+				myself.target_point <- self.drink_stores[index].location;
+			} else if (myself.drink_level <= 0) {
+				int count <- length(self.food_stores);
+				int index <- rnd(count - 1);
+				myself.target_point <- self.food_stores[index].location;
 			}
 		}
 	}
