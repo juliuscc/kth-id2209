@@ -19,14 +19,7 @@ global {
 		{
 			location <- {rnd(100),rnd(100)};
 		}
-		
-//		FestivalInformationCenter info_center <- 
-		create FestivalInformationCenter number: 1 returns: information_centers
-		{
-			location <- {50, 50};
-		}
-		
-		
+				
 		int add_dist <- 0;
 		int d_dist <- 60;
 		bool make_drink_store <- true;
@@ -49,6 +42,11 @@ global {
 			
 			make_drink_store <- not make_drink_store;
 //			information_centers[1].addStore(self);
+		}
+		
+		create FestivalInformationCenter number: 1
+		{
+			location <- {50, 50};
 		}
 	}
 //	reflex globalPrint
@@ -74,13 +72,24 @@ species FestivalInformationCenter {
 	list<FestivalStore> drink_stores;
 	list<FestivalStore> food_stores;
 	
+	init {
+		ask FestivalStore {
+			if (self.hasDrinks) {
+				myself.drink_stores << self;
+			}
+			if (self.hasFood) {
+				myself.food_stores << self;
+			}
+		}
+	}
+	
 	aspect default{
 		draw cube(10) at: location color: myColor ;
     }
     
 }
 
-species FestivalGuest skills: [moving]{
+species FestivalGuest skills: [moving] {
 	rgb myColor <- #red;
 	
 	point target_point;
@@ -99,11 +108,11 @@ species FestivalGuest skills: [moving]{
 	}
 	
 	// Make sure the agent will do something when it gets thirsty
-	reflex inquire_resource_location when: (drink_level < 0 or food_level < 0) and (target_point = nil)
+	reflex inquire_resource_location when: (drink_level <= 0 or food_level <= 0) and (target_point = nil)
 	{
 		do goto target:{50,50};
 		ask FestivalInformationCenter at_distance 2 {
-			if(myself.drink_level < 0)
+			if(myself.drink_level <= 0)
 			{
 //				myself.target_point <- self.get_drinks_location();
 			}
@@ -111,9 +120,9 @@ species FestivalGuest skills: [moving]{
 	}
 	
 	// Enter store when we are close
-	reflex enter_store when: location distance_to(target_point) < 2
-	{
-	}
+//	reflex enter_store when: location distance_to(target_point) < 2
+//	{
+//	}
 	
 	// make more thirsty or hungry
 	reflex consume_resources when: drink_level > 0 and food_level > 0
