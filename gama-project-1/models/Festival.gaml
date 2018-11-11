@@ -92,45 +92,53 @@ species FestivalInformationCenter {
 species FestivalGuest skills: [moving] {
 	rgb myColor <- #red;
 	
-	point target_point;
+	FestivalStore target_store;
 	
-	int drink_level <- rnd(10);
-	int food_level <- rnd(10);
+	int drink_level <- rnd(100);
+	int food_level <- rnd(100);
 	
-	reflex beIdle when: target_point = nil
+	reflex beIdle when: target_store = nil and (drink_level > 0 and food_level > 0)
 	{
-		do wander;
+		myColor <- #red;
+		do wander amplitude:100.0;
 	}
 	
-	reflex go_to_target when: target_point != nil
+	reflex go_to_target when: target_store != nil
 	{
-		if (location distance_to(target_point) < 2) {
-			if (drink_level <= 0) {
-				drink_level <- 10;
-			} else {
-				food_level <- 10;
+		do goto target:target_store;
+		ask FestivalStore at_distance 2 {
+			if (self.hasDrinks) {
+				myself.drink_level <- 100;
 			}
-			
-			target_point <- nil;
-		} else {
-			do goto target:target_point;
+			if (self.hasFood) {
+				myself.food_level <- 100;
+			}
+		}
+		
+		if (drink_level > 0 and food_level > 0) {
+			target_store <- nil;
 		}
 	}
 	
 	// Make sure the agent will do something when it gets thirsty
-	reflex inquire_resource_location when: (drink_level <= 0 or food_level <= 0) and (target_point = nil)
-	{
+	reflex inquire_resource_location when: (drink_level <= 0 or food_level <= 0) and (target_store = nil)
+	{		
+		myColor <- #blue;
+		
 		do goto target:{50,50};
 		ask FestivalInformationCenter at_distance 2 {
 			if(myself.drink_level <= 0) {
 				int count <- length(self.drink_stores);
 				int index <- rnd(count - 1);
-				myself.target_point <- self.drink_stores[index].location;
-			} else if (myself.drink_level <= 0) {
+				myself.target_store <- self.drink_stores[index];
+			} else if (myself.food_level <= 0) {
 				int count <- length(self.food_stores);
 				int index <- rnd(count - 1);
-				myself.target_point <- self.food_stores[index].location;
+				myself.target_store <- self.food_stores[index];
 			}
+
+			write self.food_stores;
+			write self.drink_stores;
 		}
 	}
 	
@@ -150,28 +158,10 @@ species FestivalGuest skills: [moving] {
 			drink_level <- drink_level - 1;
 		}
 	}
-	
-//	reflex changeColor when: !haveMet {
-//		myColor <- flip(0.5) ? #red : #blue;
-//	}
-	
-//	reflex goToPoint when: myColor = #red and !haveMet
-//	{
-//		do goto target:target_point speed: 3.0;
-//		if(location distance_to(target_point ) < 3)
-//		{
-//			target_point <- {rnd(100),rnd(100)};
-//		}
-//	}
-	
+		
 	aspect default{
 		draw pyramid(3) at: {location.x, location.y, 0} color: myColor;
     	draw sphere(1.5) at: {location.x, location.y, 3} color: myColor;
-//		if(!haveMet)
-//    	{
-//    		draw box(2,2,2) at: target_point color: #black;
-//    		draw line([location,target_point]) color:#black;
-//    	}
     }
 }
 
