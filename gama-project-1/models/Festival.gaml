@@ -78,7 +78,7 @@ species FestivalInformationCenter {
 	}
 	
 	aspect default{
-		draw cube(10) at: location color: myColor ;
+		draw pyramid(10) at: location color: myColor ;
     }
     
 }
