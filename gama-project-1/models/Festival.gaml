@@ -12,21 +12,20 @@ global {
 	{
 		// Make sure we get consistent behaviour
 		seed<-10.0;
-//		FestivalInformationCenter info_center <- nil
-		
 		
 		create FestivalGuest number: 10
 		{
 			location <- {rnd(100),rnd(100)};
 		}
 				
-		int add_dist <- 0;
-		int d_dist <- 60;
+//		int add_dist <- 0;
+//		int d_dist <- 60;
 		bool make_drink_store <- true;
-		create FestivalStore number: 2
+		create FestivalStore number: 4
 		{
-			location <- {10 + add_dist, 10 + add_dist};
-			add_dist <- add_dist + d_dist;
+//			location <- {10 + add_dist, 10 + add_dist};
+			location <- {rnd(100), rnd(100)};
+//			add_dist <- add_dist + d_dist;
 			
 			if (make_drink_store)
 			{
@@ -41,7 +40,6 @@ global {
 			}
 			
 			make_drink_store <- not make_drink_store;
-//			information_centers[1].addStore(self);
 		}
 		
 		create FestivalInformationCenter number: 1
@@ -49,10 +47,6 @@ global {
 			location <- {50, 50};
 		}
 	}
-//	reflex globalPrint
-//	{
-//		write "Step of simulation: " + time;
-//	}
 }
 
 species FestivalStore {
@@ -91,16 +85,18 @@ species FestivalInformationCenter {
 
 species FestivalGuest skills: [moving] {
 	rgb myColor <- #red;
+	int max_food_and_drink_level <- 400;
 	
 	FestivalStore target_store;
+	point target_point;
 	
-	int drink_level <- rnd(100);
-	int food_level <- rnd(100);
+	int drink_level <- rnd(max_food_and_drink_level);
+	int food_level <- rnd(max_food_and_drink_level);
 	
-	reflex beIdle when: target_store = nil and (drink_level > 0 and food_level > 0)
+	reflex beIdle when:  drink_level > 0 and food_level > 0 and target_store = nil and target_point = nil
 	{
 		myColor <- #red;
-		do wander amplitude:100.0;
+		do wander;
 	}
 	
 	reflex go_to_target when: target_store != nil
@@ -108,16 +104,31 @@ species FestivalGuest skills: [moving] {
 		do goto target:target_store;
 		ask FestivalStore at_distance 2 {
 			if (self.hasDrinks) {
-				myself.drink_level <- 100;
+				myself.drink_level <- myself.max_food_and_drink_level;
 			}
 			if (self.hasFood) {
-				myself.food_level <- 100;
+				myself.food_level <- myself.max_food_and_drink_level;
 			}
 		}
 		
 		if (drink_level > 0 and food_level > 0) {
 			target_store <- nil;
+			target_point <- {rnd(100), rnd(100)};
 		}
+	}
+	
+	reflex go_to_dance_target when: drink_level > 0 and food_level > 0 and target_store = nil and target_point != nil
+	{
+		myColor <- #red;
+		do goto target:target_point; 
+	}
+	
+	reflex enter_dance_mode when: drink_level > 0 and food_level > 0 and target_store = nil and target_point != nil
+	{
+		if (location distance_to (target_point) < 2)
+		{
+			target_point <- nil;
+		}	
 	}
 	
 	// Make sure the agent will do something when it gets thirsty
@@ -145,11 +156,6 @@ species FestivalGuest skills: [moving] {
 			write self.drink_stores;
 		}
 	}
-	
-	// Enter store when we are close
-//	reflex enter_store when: location distance_to(target_point) < 2
-//	{
-//	}
 	
 	// make more thirsty or hungry
 	reflex consume_resources when: drink_level > 0 and food_level > 0
