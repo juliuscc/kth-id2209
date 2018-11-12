@@ -19,6 +19,11 @@ global {
 			dangerous <- flip(0.05);
 		}
 				
+		create FestivalGuard number: 1 {
+			location <- {rnd(100),rnd(100)};
+			speed <- 1.0;
+		}
+				
 //		int add_dist <- 0;
 //		int d_dist <- 60;
 		bool make_drink_store <- true;
@@ -47,6 +52,35 @@ global {
 		{
 			location <- {50, 50};
 		}
+		
+	}
+}
+
+species FestivalGuard skills: [moving] {
+	FestivalGuest target;
+	
+	reflex wander when: target = nil {
+		speed <- 1.0;
+		do wander;
+	}
+	
+	reflex chase_target when: target != nil {
+		speed <- 2.5;
+
+
+		write "Chasing!";
+		do goto target:target;
+
+		ask FestivalGuest at_distance 2 {
+			if (self.dangerous) {
+				do die;
+			}
+			myself.target <- nil;
+		}
+	}
+	
+	aspect default {
+		draw sphere(4) at: location color: #black;
 	}
 }
 
@@ -56,7 +90,7 @@ species FestivalStore {
 	bool hasDrinks <- false;
 	bool hasFood <- false;
 	
-	aspect default{
+	aspect default {
 		draw cube(10) at: location color: myColor ;
     }
 }
@@ -74,6 +108,16 @@ species FestivalInformationCenter {
 			}
 			if (self.hasFood) {
 				myself.food_stores << self;
+			}
+		}
+	}
+	
+	reflex check_for_danger {
+		ask FestivalGuest at_distance 2 {
+			if (self.dangerous) {
+				ask FestivalGuard {
+					self.target <- myself;
+				}
 			}
 		}
 	}
@@ -187,6 +231,7 @@ experiment main type: gui {
 			species FestivalGuest;
 			species FestivalStore;
 			species FestivalInformationCenter;
+			species FestivalGuard;
 		}
 //		display chart
 //		{
