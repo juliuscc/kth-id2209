@@ -87,6 +87,8 @@ species FestivalGuest skills: [moving] {
 	rgb myColor <- #red;
 	int max_food_and_drink_level <- 400;
 	
+	float total_active_moved_distance <- 0.0;
+	
 	FestivalStore target_store;
 	point target_point;
 	
@@ -115,6 +117,8 @@ species FestivalGuest skills: [moving] {
 			target_store <- nil;
 			target_point <- {rnd(100), rnd(100)};
 		}
+		
+		total_active_moved_distance <- total_active_moved_distance + location distance_to destination;
 	}
 	
 	reflex go_to_dance_target when: drink_level > 0 and food_level > 0 and target_store = nil and target_point != nil
@@ -155,6 +159,8 @@ species FestivalGuest skills: [moving] {
 			write self.food_stores;
 			write self.drink_stores;
 		}
+		
+		total_active_moved_distance <- total_active_moved_distance + location distance_to destination;
 	}
 	
 	// make more thirsty or hungry
@@ -184,14 +190,13 @@ experiment main type: gui {
 			species FestivalStore;
 			species FestivalInformationCenter;
 		}
-//		display chart
-//		{
-//			chart "Agent information"
-//			{
-//				data "Agents blue color" value:length(FestivalGuest where (each.myColor = #blue));
-//				data "Have met another blue" value:length(FestivalGuest where (each.haveMet = true));
-//			}
-//		}
+		display chart refresh:every(10.0)
+		{
+			chart "Agent information" type: series
+			{	
+				data "Avg. Moved Distance" value: (FestivalGuest sum_of(each.total_active_moved_distance)) / (time + 1);
+			}
+		}
 	}
 }
 

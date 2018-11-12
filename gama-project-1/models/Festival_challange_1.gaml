@@ -12,6 +12,7 @@ global {
 	{
 		// Make sure we get consistent behaviour
 		seed<-10.0;
+		time<-0.0;
 		
 		create FestivalGuest number: 10
 		{
@@ -87,11 +88,18 @@ species FestivalGuest skills: [moving] {
 	rgb myColor <- #red;
 	int max_food_and_drink_level <- 400;
 	
+	float total_active_moved_distance <- 0.0;
+	
 	FestivalStore target_store;
 	point target_point;
 	
+	bool use_mem <- false;
+	
 	int drink_level <- rnd(max_food_and_drink_level);
 	int food_level <- rnd(max_food_and_drink_level);
+	
+	list<FestivalStore> mem_drink_stores;
+	list<FestivalStore> mem_food_stores;
 	
 	reflex beIdle when:  drink_level > 0 and food_level > 0 and target_store = nil and target_point = nil
 	{
@@ -109,12 +117,18 @@ species FestivalGuest skills: [moving] {
 			if (self.hasFood) {
 				myself.food_level <- myself.max_food_and_drink_level;
 			}
+			
+			// Reset with a new mem value. 
+			// 25% chance that they will try to find a new place
+			myself.use_mem <- flip(0.5);
 		}
 		
 		if (drink_level > 0 and food_level > 0) {
 			target_store <- nil;
 			target_point <- {rnd(100), rnd(100)};
 		}
+		
+		total_active_moved_distance <- total_active_moved_distance + location distance_to destination;
 	}
 	
 	reflex go_to_dance_target when: drink_level > 0 and food_level > 0 and target_store = nil and target_point != nil
@@ -131,11 +145,40 @@ species FestivalGuest skills: [moving] {
 		}	
 	}
 	
+	reflex inquire_resource_location_mem when: (drink_level <= 0 or food_level <= 0) and (target_store = nil) and use_mem
+	{
+		// Do an internal lookup operation. Abort if it is not possible.
+		if (drink_level <= 0)
+		{
+			if length(mem_drink_stores) > 0 {
+				target_store <- first(1 among mem_drink_stores);
+				myColor <- #blue;	
+				write "" + self + " is going to drink.";
+			} else {
+				use_mem <- false;
+				write "" + self + " could have gone directly to drink.";
+			}
+			
+		} else if (food_level <= 0)
+		{
+			if length(mem_food_stores) > 0 {
+				target_store <- first(1 among mem_food_stores);	
+				myColor <- #blue;
+				write "" + self + " is going to eat.";
+			} else {
+				use_mem <- false;
+				write "" + self + " could have gone directly to food.";
+			}
+		}
+		
+	}
+	
 	// Make sure the agent will do something when it gets thirsty
-	reflex inquire_resource_location when: (drink_level <= 0 or food_level <= 0) and (target_store = nil)
+	reflex inquire_resource_location when: (drink_level <= 0 or food_level <= 0) and (target_store = nil) and not use_mem
 	{		
 		myColor <- #yellow;
 		
+		// Do a lookup operation (go to information center)
 		do goto target:{50,50};
 		ask FestivalInformationCenter at_distance 2 {
 			if(myself.drink_level <= 0) {
@@ -144,17 +187,28 @@ species FestivalGuest skills: [moving] {
 				
 				myself.target_store <- self.drink_stores[index];
 				myself.myColor <- #purple;
+				
+				// Adding to mem. without duplicates
+				remove all: myself.target_store from: myself.mem_drink_stores;
+				add myself.target_store to: myself.mem_drink_stores;
+				
 			} else if (myself.food_level <= 0) {
 				int count <- length(self.food_stores);
 				int index <- rnd(count - 1);
 				
 				myself.target_store <- self.food_stores[index];
 				myself.myColor <- #green;
+				
+				// Adding to mem. without duplicates
+				remove all: myself.target_store from: myself.mem_food_stores;
+				add myself.target_store to: myself.mem_food_stores;
 			}
 
-			write self.food_stores;
-			write self.drink_stores;
+//			write self.food_stores;
+//			write self.drink_stores;
 		}
+		
+		total_active_moved_distance <- total_active_moved_distance + location distance_to destination;
 	}
 	
 	// make more thirsty or hungry
@@ -167,7 +221,7 @@ species FestivalGuest skills: [moving] {
 		} else {
 			drink_level <- drink_level - 1;
 		}
-	}
+	} 
 		
 	aspect default{
 		draw pyramid(3) at: {location.x, location.y, 0} color: myColor;
@@ -184,14 +238,13 @@ experiment main type: gui {
 			species FestivalStore;
 			species FestivalInformationCenter;
 		}
-//		display chart
-//		{
-//			chart "Agent information"
-//			{
-//				data "Agents blue color" value:length(FestivalGuest where (each.myColor = #blue));
-//				data "Have met another blue" value:length(FestivalGuest where (each.haveMet = true));
-//			}
-//		}
+		display chart refresh:every(10.0)
+		{
+			chart "Agent information" type: series
+			{	
+				data "Avg. Moved Distance" value: (FestivalGuest sum_of(each.total_active_moved_distance)) / (time + 1);
+			}
+		}
 	}
 }
 
