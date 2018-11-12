@@ -32,7 +32,7 @@ global {
 			{
 				hasDrinks <- true;
 				hasFood <- false;
-				myColor <- #blue;
+				myColor <- #purple;
 				
 			} else {
 				hasDrinks <- false;
@@ -123,18 +123,22 @@ species FestivalGuest skills: [moving] {
 	// Make sure the agent will do something when it gets thirsty
 	reflex inquire_resource_location when: (drink_level <= 0 or food_level <= 0) and (target_store = nil)
 	{		
-		myColor <- #blue;
+		myColor <- #yellow;
 		
 		do goto target:{50,50};
 		ask FestivalInformationCenter at_distance 2 {
 			if(myself.drink_level <= 0) {
 				int count <- length(self.drink_stores);
 				int index <- rnd(count - 1);
+				
 				myself.target_store <- self.drink_stores[index];
+				myself.myColor <- #purple;
 			} else if (myself.food_level <= 0) {
 				int count <- length(self.food_stores);
 				int index <- rnd(count - 1);
+				
 				myself.target_store <- self.food_stores[index];
+				myself.myColor <- #green;
 			}
 
 			write self.food_stores;
