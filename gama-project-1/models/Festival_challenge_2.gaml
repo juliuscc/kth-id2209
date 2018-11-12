@@ -13,9 +13,10 @@ global {
 		// Make sure we get consistent behaviour
 		seed<-10.0;
 		
-		create FestivalGuest number: 10
+		create FestivalGuest number: 20
 		{
 			location <- {rnd(100),rnd(100)};
+			dangerous <- flip(0.05);
 		}
 				
 //		int add_dist <- 0;
@@ -93,7 +94,9 @@ species FestivalGuest skills: [moving] {
 	int drink_level <- rnd(max_food_and_drink_level);
 	int food_level <- rnd(max_food_and_drink_level);
 	
-	reflex beIdle when:  drink_level > 0 and food_level > 0 and target_store = nil and target_point = nil
+	bool dangerous;
+	
+	reflex beIdle when: drink_level > 0 and food_level > 0 and target_store = nil and target_point = nil
 	{
 		myColor <- #red;
 		do wander;
@@ -151,9 +154,6 @@ species FestivalGuest skills: [moving] {
 				myself.target_store <- self.food_stores[index];
 				myself.myColor <- #green;
 			}
-
-			write self.food_stores;
-			write self.drink_stores;
 		}
 	}
 	
@@ -169,7 +169,11 @@ species FestivalGuest skills: [moving] {
 		}
 	}
 		
-	aspect default{
+	aspect default {
+		if (dangerous) {
+			myColor <- #black;
+		}
+		
 		draw pyramid(3) at: {location.x, location.y, 0} color: myColor;
     	draw sphere(1.5) at: {location.x, location.y, 3} color: myColor;
     }
