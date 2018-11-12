@@ -16,7 +16,7 @@ global {
 		create FestivalGuest number: 20
 		{
 			location <- {rnd(100),rnd(100)};
-			dangerous <- flip(0.05);
+//			dangerous <- flip(0.05);
 		}
 				
 		create FestivalGuard number: 1 {
@@ -68,11 +68,12 @@ species FestivalGuard skills: [moving] {
 		speed <- 2.5;
 
 
-		write "Chasing!";
+//		write "Chasing!";
 		do goto target:target;
 
 		ask FestivalGuest at_distance 2 {
 			if (self.dangerous) {
+				write "Killed violating guest!";
 				do die;
 			}
 			myself.target <- nil;
@@ -80,7 +81,11 @@ species FestivalGuard skills: [moving] {
 	}
 	
 	aspect default {
-		draw sphere(4) at: location color: #black;
+//		draw sphere(4) at: location color: #black;
+
+		
+		draw pyramid(5) at: {location.x, location.y, 0} color: #black;
+    	draw sphere(3) at: {location.x, location.y, 6} color: #black;
 	}
 }
 
@@ -113,10 +118,13 @@ species FestivalInformationCenter {
 	}
 	
 	reflex check_for_danger {
-		ask FestivalGuest at_distance 2 {
+		ask FestivalGuest at_distance 30 {
 			if (self.dangerous) {
 				ask FestivalGuard {
-					self.target <- myself;
+					if (self.target = nil)
+					{
+						self.target <- myself;	
+					}
 				}
 			}
 		}
@@ -138,10 +146,15 @@ species FestivalGuest skills: [moving] {
 	int drink_level <- rnd(max_food_and_drink_level);
 	int food_level <- rnd(max_food_and_drink_level);
 	
-	bool dangerous;
+	bool dangerous <- false;
 	
 	reflex beIdle when: drink_level > 0 and food_level > 0 and target_store = nil and target_point = nil
 	{
+		if (not dangerous)
+		{
+			dangerous <- flip(0.0005);
+		}
+		
 		myColor <- #red;
 		do wander;
 	}
