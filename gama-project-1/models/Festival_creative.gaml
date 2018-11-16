@@ -221,9 +221,6 @@ species FestivalGuest skills: [moving] {
 				remove all: myself.target_store from: myself.mem_food_stores;
 				add myself.target_store to: myself.mem_food_stores;
 			}
-
-//			write self.food_stores;
-//			write self.drink_stores;
 		}
 		
 		total_active_moved_distance <- total_active_moved_distance + location distance_to destination;

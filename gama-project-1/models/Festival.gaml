@@ -17,15 +17,11 @@ global {
 		{
 			location <- {rnd(100),rnd(100)};
 		}
-				
-//		int add_dist <- 0;
-//		int d_dist <- 60;
+		
 		bool make_drink_store <- true;
 		create FestivalStore number: 4
 		{
-//			location <- {10 + add_dist, 10 + add_dist};
 			location <- {rnd(100), rnd(100)};
-//			add_dist <- add_dist + d_dist;
 			
 			if (make_drink_store)
 			{
