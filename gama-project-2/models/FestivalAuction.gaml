@@ -53,12 +53,15 @@ species FestivalAuctioneer skills: [moving, fipa] {
 	
 	int go_to_auction_timeout <- rnd(100) update: go_to_auction_timeout - 1 min: 0;
 	
-	int start_price <- 100 + rnd(500);
+	int start_price <- 200 + rnd(300);
 	int lowest_price <- round(start_price * 0.5);
 	int current_price <- start_price;
+	int auction_iteration <- 0;
 	
 	bool auction_active <- false;
 	int auction_start_timeout <- 0 update: auction_start_timeout - 1 min: 0;
+	
+	int nr_buyers_ready <- 0;
 	
 	list<FestivalGuest> agreed_buyers;
 	
@@ -97,16 +100,60 @@ species FestivalAuctioneer skills: [moving, fipa] {
 		informs <- [];
 	}
 	
-	reflex start_auction when: location distance_to auction_hall < 2 and auction_active and auction_start_timeout <= 0
+	reflex start_auction 
+		when: auction_active 
+			and 	auction_start_timeout <= 0 
+			or 		(nr_buyers_ready = length(agreed_buyers) and nr_buyers_ready > 0)
+		
 	{
+		auction_iteration <- auction_iteration + 1;
+		
+		if (auction_iteration > 1)
+		{
+			current_price <- current_price * 0.9;
+		}
+		
+		write "Starting auction iteration: " + auction_iteration;
 		write "Sell for price: " + current_price;
 		auction_start_timeout <- 100;
+		nr_buyers_ready <- 0;
 		
 		do start_conversation(
 			to: agreed_buyers, protocol: 'fipa-contract-net', 
 			performative: 'cfp', 
 			contents: ['Sell for price', current_price]
 		);
+	}
+	
+	reflex collect_failures when: !empty(failures)
+	{
+		write "Failue in communication protocol! Removing participant!";
+		loop wrongdoerMessage over: failures
+		{
+			remove wrongdoerMessage.sender from: agreed_buyers;	
+		}
+		
+		failures <- [];
+	}
+	
+	reflex collect_accepts when: !empty(agrees)
+	{
+		loop agreer over: agrees {
+			write "Agent ["+agreer.sender+"] agrees at price: " + current_price;	
+		}
+		
+		auction_active <- false;
+		agrees <- [];
+	}
+	
+	reflex collect_refusals when: !empty(refuses)
+	{
+		loop refuser over: refuses
+		{
+			write "Agent ["+refuser.sender+"] refuses with message: " + refuser.contents;	
+			nr_buyers_ready <- nr_buyers_ready + 1;
+		}
+		refuses <- [];
 	}
 	
 	aspect default{
@@ -153,27 +200,29 @@ species FestivalGuest skills: [moving, fipa] {
 	{
 		message proposalFromAuctioneer <- cfps[0];
 		
-		if (proposalFromAuctioneer.contents at 0 = 'Selling for price')
+		if (proposalFromAuctioneer.contents at 0 = 'Sell for price')
 		{
 			int proposedPrice <- proposalFromAuctioneer.contents at 1;
 			if (proposedPrice < accepted_price)
 			{
 				// Accept
-				write "["+self+"] Accepting price: " + proposedPrice;
+				write "["+self+"] Accepting price: " + proposedPrice + " would accept at " + accepted_price;
 				do agree with: (message: proposalFromAuctioneer, contents: ['Accept price', proposedPrice]);
 			}
 			else
 			{
 				// Refuse
-				write "["+self+"] Refusing price: " + proposedPrice;
+				write "["+self+"] Refusing price: " + proposedPrice + " would accept at " + accepted_price;
 				do refuse with: (message: proposalFromAuctioneer, contents: ['Does not accept price', proposedPrice]);
 			}
 		}
 		else
 		{
+			write "Received wrong message: " + proposalFromAuctioneer.contents;
 			do failure with: (message: proposalFromAuctioneer, contents: ['Did not understand message']);
 		}
 		
+		cfps <- [];
 //		do propose with: (message: cfps at 0, contents: ['Proposed Price']);
 	}
 	
