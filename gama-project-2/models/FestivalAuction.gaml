@@ -99,7 +99,7 @@ species FestivalAuctioneer skills: [moving, fipa] {
 	
 	reflex start_auction when: location distance_to auction_hall < 2 and auction_active and auction_start_timeout <= 0
 	{
-		write "Starting auction";
+		write "Sell for price: " + current_price;
 		auction_start_timeout <- 100;
 		
 		do start_conversation(
@@ -118,6 +118,7 @@ species FestivalAuctioneer skills: [moving, fipa] {
 species FestivalGuest skills: [moving, fipa] {
 	rgb myColor <- #red;
 	AuctionHall auction_hall;
+	int accepted_price <- 100 + rnd(100);
 	
 	reflex go_to_auction when: auction_hall != nil
 	{
@@ -146,6 +147,34 @@ species FestivalGuest skills: [moving, fipa] {
 		}
 		
 		informs <- [];
+	}
+	
+	reflex auction_request when: !empty(cfps)
+	{
+		message proposalFromAuctioneer <- cfps[0];
+		
+		if (proposalFromAuctioneer.contents at 0 = 'Selling for price')
+		{
+			int proposedPrice <- proposalFromAuctioneer.contents at 1;
+			if (proposedPrice < accepted_price)
+			{
+				// Accept
+				write "["+self+"] Accepting price: " + proposedPrice;
+				do agree with: (message: proposalFromAuctioneer, contents: ['Accept price', proposedPrice]);
+			}
+			else
+			{
+				// Refuse
+				write "["+self+"] Refusing price: " + proposedPrice;
+				do refuse with: (message: proposalFromAuctioneer, contents: ['Does not accept price', proposedPrice]);
+			}
+		}
+		else
+		{
+			do failure with: (message: proposalFromAuctioneer, contents: ['Did not understand message']);
+		}
+		
+//		do propose with: (message: cfps at 0, contents: ['Proposed Price']);
 	}
 	
 	aspect default{
