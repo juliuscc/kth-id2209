@@ -21,7 +21,7 @@ global {
 		create FestivalGuest number: 10
 		{
 			location <- {rnd(100),rnd(100)};
-			auction_hall <- first(1 among AuctionHall);
+//			auction_hall <- first(1 among AuctionHall);
 		}
 		
 		int add_location <- 0;
@@ -51,7 +51,7 @@ species FestivalAuctioneer skills: [moving, fipa] {
 	rgb myColor <- #blue;
 	AuctionHall auction_hall;
 	
-	int go_to_auction_timeout <- rnd(250) update: go_to_auction_timeout - 1 min: 0;
+	int go_to_auction_timeout <- rnd(100) update: go_to_auction_timeout - 1 min: 0;
 	
 	int start_price <- 100 + rnd(500);
 	int lowest_price <- round(start_price * 0.5);
@@ -64,44 +64,48 @@ species FestivalAuctioneer skills: [moving, fipa] {
 	
 	reflex go_to_auction when: go_to_auction_timeout <= 0
 	{
-		if (location distance_to auction_hall > 4) {
+		if (location distance_to auction_hall > 2) {
 			do goto target:auction_hall;
 		}
 	}
 	
-	reflex inform_about_auction when: location distance_to auction_hall < 2 and not auction_active
+	reflex inform_about_auction when: location distance_to auction_hall <= 2 and not auction_active
 	{
+		agreed_buyers <- [];
+		auction_active <- true;
+		auction_start_timeout <- 100;
+		
+		write "Informing about auction";
 		list<FestivalGuest> participants <- list<FestivalGuest> (FestivalGuest);
 		do start_conversation(
 			to: participants, protocol: 'fipa-inform', 
 			performative: 'inform', 
 			contents: ['Starting Auction', auction_hall]
 		);
-		
-		auction_active <- true;
-		auction_start_timeout <- 100;
 	}
 	
 	reflex add_agreed_buyer when: !empty(informs)
 	{
-		loop a over: informs {
-			write a.contents;
-//			if (a.contents at 0 = 'Accept Auction')
-//			{
-//				agreed_buyers << a.sender;
-//			}
+		loop info over: informs {
+			write "New buyer: " + info.contents at 0;
+			if (info.contents at 0 = 'Participate in Auction')
+			{
+				agreed_buyers << info.sender;
+			}
 		}
+		
+		informs <- [];
 	}
 	
 	reflex start_auction when: location distance_to auction_hall < 2 and auction_active and auction_start_timeout <= 0
 	{
-		// Who is here?
-		list<FestivalGuest> participants <- list<FestivalGuest> (FestivalGuest); // at_location auction_hall.envelope; 
+		write "Starting auction";
+		auction_start_timeout <- 100;
 		
 		do start_conversation(
-			to: participants, protocol: 'fipa-contract-net', 
+			to: agreed_buyers, protocol: 'fipa-contract-net', 
 			performative: 'cfp', 
-			contents: ['Sell for price: ' + current_price]
+			contents: ['Sell for price', current_price]
 		);
 	}
 	
@@ -115,23 +119,33 @@ species FestivalGuest skills: [moving, fipa] {
 	rgb myColor <- #red;
 	AuctionHall auction_hall;
 	
-	reflex go_to_auction
+	reflex go_to_auction when: auction_hall != nil
 	{
-		if (location distance_to auction_hall > 4) {
+		if (location distance_to auction_hall > 2) {
 			do goto target:auction_hall;
 		}
 	}
 	
-	reflex answer_auction when: !empty(informs)
+	// Selects an auction when a new auctioneer comes.
+	reflex answer_auction when: !empty(informs) and auction_hall = nil
 	{
 		loop info over: informs
 		{
-			write info.contents;
-//			if (info.contents at 0 = 'Starting Auction')
-//			{
-//				
-//			}
+			if (info.contents at 0 = "Starting Auction")
+			{
+				write "["+info.contents at 0+"] Selecting auction: " + info.contents at 1;	
+				auction_hall <- info.contents at 1;
+				
+				// Inform about participation
+				do start_conversation(
+					to: info.sender, protocol: 'fipa-inform', 
+					performative: 'inform', 
+					contents: ['Participate in Auction']
+				);
+			}
 		}
+		
+		informs <- [];
 	}
 	
 	aspect default{
