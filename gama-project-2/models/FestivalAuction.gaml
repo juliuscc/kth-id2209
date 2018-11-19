@@ -153,7 +153,7 @@ species FestivalAuctioneer skills: [moving, fipa] {
 	}
 	
 	reflex collect_accepts when: !empty(proposes)
-	{	
+	{
 		auction_active <- false;
 		message winnerMessage <- first(1 among proposes);
 		remove winnerMessage from: proposes;
@@ -170,8 +170,8 @@ species FestivalAuctioneer skills: [moving, fipa] {
 		if(agreed_buyers != nil)
 		{
 			do start_conversation(
-				to: agreed_buyers, protocol: 'fipa-inform', 
-				performative: 'inform', 
+				to: agreed_buyers, protocol: 'fipa-inform',
+				performative: 'inform',
 				contents: ['Auction Ended', auction_hall]
 			);
 			
@@ -184,16 +184,16 @@ species FestivalAuctioneer skills: [moving, fipa] {
 	{
 		loop refuser over: refuses
 		{
-//			write "Agent ["+refuser.sender+"] refuses with message: " + refuser.contents;	
+//			write "Agent ["+refuser.sender+"] refuses with message: " + refuser.contents;
 			nr_buyers_ready <- nr_buyers_ready + 1;
 		}
 		refuses <- [];
 	}
-	
-	aspect default{
+
+	aspect default {
 		draw pyramid(3) at: {location.x, location.y, 0} color: myColor;
     	draw sphere(1.5) at: {location.x, location.y, 3} color: myColor;
-    }
+	}
 }
 
 species FestivalGuest skills: [moving, fipa] {
@@ -216,6 +216,10 @@ species FestivalGuest skills: [moving, fipa] {
 		if location distance_to target_point < 2
 		{
 			target_point <- nil;
+			
+			if (myColor = #green) {
+				do die;
+			}
 		}
 	}
 	
@@ -249,6 +253,7 @@ species FestivalGuest skills: [moving, fipa] {
 			{
 				write "["+self+"] I won the auction";
 				myColor <- #green;
+				target_point <- SpawnPoint[1].location;
 			}
 		}
 	}
@@ -262,7 +267,9 @@ species FestivalGuest skills: [moving, fipa] {
 			{
 				write "["+self+"] Leaving auction";
 				auction_hall <- nil;
-				target_point <- {rnd(100), rnd(100)};
+				if (myColor != #green) {
+					target_point <- {rnd(100), rnd(100)};
+				}
 			}	
 		}	
 	}
@@ -296,7 +303,7 @@ species FestivalGuest skills: [moving, fipa] {
 		cfps <- [];
 	}
 	
-	aspect default{
+	aspect default {
 		draw pyramid(3) at: {location.x, location.y, 0} color: myColor;
     	draw sphere(1.5) at: {location.x, location.y, 3} color: myColor;
     }
