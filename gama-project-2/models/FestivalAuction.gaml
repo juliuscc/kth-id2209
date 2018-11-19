@@ -66,7 +66,7 @@ species FestivalAuctioneer skills: [moving, fipa] {
 	
 	list<FestivalGuest> agreed_buyers;
 	
-	reflex go_to_auction when: go_to_auction_timeout <= 0
+	reflex go_to_auction when: go_to_auction_timeout <= 0 and should_start_auction
 	{
 		if (location distance_to auction_hall > 2) {
 			do goto target:auction_hall;
@@ -189,6 +189,16 @@ species FestivalAuctioneer skills: [moving, fipa] {
 		}
 		refuses <- [];
 	}
+	
+	reflex go_back when: not should_start_auction and not auction_active
+	{
+		do goto target: SpawnPoint[0].location;
+		
+		if location distance_to SpawnPoint[0].location <= 0
+		{
+			do die;
+		}
+	} 
 
 	aspect default {
 		draw pyramid(3) at: {location.x, location.y, 0} color: myColor;
@@ -230,7 +240,7 @@ species FestivalGuest skills: [moving, fipa] {
 		{
 			if (info.contents at 0 = "Starting Auction")
 			{
-				write "["+info.contents at 0+"] Selecting auction: " + info.contents at 1;	
+				write "["+info.contents at 0+"] Selecting auction: " + info.contents at 1;
 				auction_hall <- info.contents at 1;
 				
 				// Inform about participation
