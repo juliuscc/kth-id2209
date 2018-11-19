@@ -58,6 +58,7 @@ species FestivalAuctioneer skills: [moving, fipa] {
 	int current_price <- start_price;
 	int auction_iteration <- 0;
 	
+	bool should_start_auction <- true;
 	bool auction_active <- false;
 	int auction_start_timeout <- 0 update: auction_start_timeout - 1 min: 0;
 	
@@ -72,10 +73,11 @@ species FestivalAuctioneer skills: [moving, fipa] {
 		}
 	}
 	
-	reflex inform_about_auction when: location distance_to auction_hall <= 2 and not auction_active
+	reflex inform_about_auction when: location distance_to auction_hall <= 2 and not auction_active and should_start_auction
 	{
 		agreed_buyers <- [];
 		auction_active <- true;
+		should_start_auction <- false;
 		auction_start_timeout <- 100;
 		
 		write "Informing about auction";
@@ -101,7 +103,7 @@ species FestivalAuctioneer skills: [moving, fipa] {
 	}
 	
 	reflex start_auction 
-		when: auction_active 
+		when: 		auction_active 
 			and 	auction_start_timeout <= 0 
 			or 		(nr_buyers_ready = length(agreed_buyers) and nr_buyers_ready > 0)
 		
@@ -110,19 +112,33 @@ species FestivalAuctioneer skills: [moving, fipa] {
 		
 		if (auction_iteration > 1)
 		{
-			current_price <- current_price * 0.9;
+			current_price <- round(current_price * 0.9);
 		}
 		
-		write "Starting auction iteration: " + auction_iteration;
-		write "Sell for price: " + current_price;
-		auction_start_timeout <- 100;
-		nr_buyers_ready <- 0;
-		
-		do start_conversation(
-			to: agreed_buyers, protocol: 'fipa-contract-net', 
-			performative: 'cfp', 
-			contents: ['Sell for price', current_price]
-		);
+		if (current_price >= lowest_price) 
+		{
+			write "Starting auction iteration: " + auction_iteration;
+			write "Sell for price: " + current_price;
+			auction_start_timeout <- 100;
+			nr_buyers_ready <- 0;
+			
+			do start_conversation(
+				to: agreed_buyers, protocol: 'fipa-contract-net', 
+				performative: 'cfp', 
+				contents: ['Sell for price', current_price]
+			);	
+		}
+		else
+		{
+			auction_active <- false;
+			write "No one is willing to buy at the right price.";
+			
+			do start_conversation(
+				to: agreed_buyers, protocol: 'fipa-inform', 
+				performative: 'inform', 
+				contents: ['Auction Ended', auction_hall]
+			);
+		}
 	}
 	
 	reflex collect_failures when: !empty(failures)
@@ -136,21 +152,39 @@ species FestivalAuctioneer skills: [moving, fipa] {
 		failures <- [];
 	}
 	
-	reflex collect_accepts when: !empty(agrees)
-	{
-		loop agreer over: agrees {
-			write "Agent ["+agreer.sender+"] agrees at price: " + current_price;	
+	reflex collect_accepts when: !empty(proposes)
+	{	
+		auction_active <- false;
+		message winnerMessage <- first(1 among proposes);
+		remove winnerMessage from: proposes;
+		
+		write "Agent ["+winnerMessage.sender+"] will buy at price: " + current_price;	
+		write "Item sold!";
+		do accept_proposal with: (message: winnerMessage, contents: ['Item sold to you at price', current_price]);
+		
+		// Reject all others
+		loop proposition over: proposes {
+			do reject_proposal with: (message: proposition, contents: ['Item already sold']);
 		}
 		
-		auction_active <- false;
-		agrees <- [];
+		if(agreed_buyers != nil)
+		{
+			do start_conversation(
+				to: agreed_buyers, protocol: 'fipa-inform', 
+				performative: 'inform', 
+				contents: ['Auction Ended', auction_hall]
+			);
+			
+			agrees <- [];
+			agreed_buyers <- [];
+		}
 	}
 	
 	reflex collect_refusals when: !empty(refuses)
 	{
 		loop refuser over: refuses
 		{
-			write "Agent ["+refuser.sender+"] refuses with message: " + refuser.contents;	
+//			write "Agent ["+refuser.sender+"] refuses with message: " + refuser.contents;	
 			nr_buyers_ready <- nr_buyers_ready + 1;
 		}
 		refuses <- [];
@@ -165,12 +199,23 @@ species FestivalAuctioneer skills: [moving, fipa] {
 species FestivalGuest skills: [moving, fipa] {
 	rgb myColor <- #red;
 	AuctionHall auction_hall;
+	point target_point;
 	int accepted_price <- 100 + rnd(100);
 	
 	reflex go_to_auction when: auction_hall != nil
 	{
 		if (location distance_to auction_hall > 2) {
 			do goto target:auction_hall;
+		}
+	}
+	
+	reflex go_to_target_point when: target_point != nil
+	{
+		do goto target:target_point;
+		
+		if location distance_to target_point < 2
+		{
+			target_point <- nil;
 		}
 	}
 	
@@ -196,6 +241,32 @@ species FestivalGuest skills: [moving, fipa] {
 		informs <- [];
 	}
 	
+	reflex win_auction when: !empty(accept_proposals)
+	{
+		loop accepted_proposals over: accept_proposals
+		{
+			if (accepted_proposals.contents at 0 = 'Item sold to you at price')
+			{
+				write "["+self+"] I won the auction";
+				myColor <- #green;
+			}
+		}
+	}
+	
+	// Selects an auction when a new auctioneer comes.
+	reflex end_auction when: !empty(informs) and auction_hall != nil
+	{
+		loop info over: informs
+		{
+			if (info.contents at 0 = 'Auction Ended' and info.contents at 1 = auction_hall)
+			{
+				write "["+self+"] Leaving auction";
+				auction_hall <- nil;
+				target_point <- {rnd(100), rnd(100)};
+			}	
+		}	
+	}
+	
 	reflex auction_request when: !empty(cfps)
 	{
 		message proposalFromAuctioneer <- cfps[0];
@@ -207,7 +278,7 @@ species FestivalGuest skills: [moving, fipa] {
 			{
 				// Accept
 				write "["+self+"] Accepting price: " + proposedPrice + " would accept at " + accepted_price;
-				do agree with: (message: proposalFromAuctioneer, contents: ['Accept price', proposedPrice]);
+				do propose with: (message: proposalFromAuctioneer, contents: ['Accept price', proposedPrice]);
 			}
 			else
 			{
@@ -223,7 +294,6 @@ species FestivalGuest skills: [moving, fipa] {
 		}
 		
 		cfps <- [];
-//		do propose with: (message: cfps at 0, contents: ['Proposed Price']);
 	}
 	
 	aspect default{
