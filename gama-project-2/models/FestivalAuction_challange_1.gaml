@@ -9,10 +9,16 @@ model FestivalAuction
 
 
 global {
+	int CATEGORY_MUSIC_CD <- 0;
+	int CATEGORY_TSHIRT <- 1;
+	int CATEGORY_DRINKS <- 2;
+	int CATEGORY_SWAG <- 3;
+	
+	int CATEGORY_MAX <- 3;
 	init
 	{
 		// Make sure we get consistent behaviour
-		seed<-10.0;
+		seed <- 10.0;
 				
 		create AuctionHall number: 2 {
 			location <- {rnd(100), rnd(100)};
@@ -21,6 +27,11 @@ global {
 		create FestivalGuest number: 10
 		{
 			location <- {rnd(100),rnd(100)};
+			
+			loop times: CATEGORY_MAX + 1
+			{
+				wanted_categories << flip(0.5);
+			}
 //			auction_hall <- first(1 among AuctionHall);
 		}
 		
@@ -33,6 +44,7 @@ global {
 		create FestivalAuctioneer number: 2
 		{
 			location <- first(SpawnPoint).location;
+			category <- rnd(CATEGORY_MAX);
 			
 			int count <- length(AuctionHall);
 			int index <- rnd(count - 1);
@@ -62,6 +74,8 @@ species FestivalAuctioneer skills: [moving, fipa] {
 	int current_price <- start_price;
 	int auction_iteration <- 0;
 	
+	int category min: 0 max: CATEGORY_MAX;
+	
 	bool should_start_auction <- true;
 	bool auction_active <- false;
 	int auction_start_timeout <- 0 update: auction_start_timeout - 1 min: 0;
@@ -84,12 +98,12 @@ species FestivalAuctioneer skills: [moving, fipa] {
 		should_start_auction <- false;
 		auction_start_timeout <- 100;
 		
-		write "Informing about auction";
+		write "" + self + " Informing about auction for category";
 		list<FestivalGuest> participants <- list<FestivalGuest> (FestivalGuest);
 		do start_conversation(
 			to: participants, protocol: 'fipa-inform', 
 			performative: 'inform', 
-			contents: ['Starting Auction', auction_hall]
+			contents: ['Starting Auction', auction_hall, category]
 		);
 	}
 	
@@ -106,23 +120,20 @@ species FestivalAuctioneer skills: [moving, fipa] {
 		informs <- [];
 	}
 	
-	reflex abort_auction when: auction_start_timeout = 0 and not should_start_auction
+	reflex abort_auction when: auction_start_timeout = 0 and not should_start_auction and auction_active and nr_buyers_ready = 0 and length(agreed_buyers) = 0
 	{
-		if (nr_buyers_ready = 0 and length(agreed_buyers) = 0 and auction_active)
-		{
-			write "" + self + " Giving up on auction because no one wants to start.";
-			auction_active <- false; 
-		} 
+		write "" + self + " Giving up on auction because no one wants to start.";
+		auction_active <- false; 
 	}
 	
 	reflex start_auction 
 		when: 		auction_active 
-			and 	auction_start_timeout <= 0 
+			and 	auction_start_timeout <= 0
 			or 		(nr_buyers_ready = length(agreed_buyers) and nr_buyers_ready > 0)
 		
 	{		
 		auction_iteration <- auction_iteration + 1;
-		
+				
 		if (auction_iteration > 1)
 		{
 			current_price <- round(current_price * 0.9);
@@ -130,8 +141,8 @@ species FestivalAuctioneer skills: [moving, fipa] {
 		
 		if (current_price >= lowest_price) 
 		{
-			write "Starting auction iteration: " + auction_iteration;
-			write "Sell for price: " + current_price;
+			write "" + self + " Starting auction iteration: " + auction_iteration;
+			write "" + self + " Sell for price: " + current_price;
 			auction_start_timeout <- 100;
 			nr_buyers_ready <- 0;
 			
@@ -144,7 +155,7 @@ species FestivalAuctioneer skills: [moving, fipa] {
 		else
 		{
 			auction_active <- false;
-			write "No one is willing to buy at the right price.";
+			write "" + self + " No one is willing to buy at the right price.";
 			
 			do start_conversation(
 				to: agreed_buyers, protocol: 'fipa-inform', 
@@ -171,7 +182,7 @@ species FestivalAuctioneer skills: [moving, fipa] {
 		message winnerMessage <- first(1 among proposes);
 		remove winnerMessage from: proposes;
 		
-		write "Agent ["+winnerMessage.sender+"] will buy at price: " + current_price;	
+		write "" + self + " Agent [" + winnerMessage.sender + "] will buy at price: " + current_price;	
 		write "Item sold!";
 		do accept_proposal with: (message: winnerMessage, contents: ['Item sold to you at price', current_price]);
 		
@@ -224,6 +235,7 @@ species FestivalGuest skills: [moving, fipa] {
 	AuctionHall auction_hall;
 	point target_point;
 	int accepted_price <- 100 + rnd(100);
+	list<bool> wanted_categories;
 	
 	reflex go_to_auction when: auction_hall != nil
 	{
@@ -253,15 +265,19 @@ species FestivalGuest skills: [moving, fipa] {
 		{
 			if (info.contents at 0 = "Starting Auction")
 			{
-				write "["+info.contents at 0+"] Selecting auction: " + info.contents at 1;
-				auction_hall <- info.contents at 1;
-				
-				// Inform about participation
-				do start_conversation(
-					to: info.sender, protocol: 'fipa-inform', 
-					performative: 'inform', 
-					contents: ['Participate in Auction']
-				);
+				int category <- info.contents at 2;
+				if (wanted_categories[category])
+				{				
+					write "["+info.contents at 0+"] Selecting auction: " + info.contents at 1;				
+					auction_hall <- info.contents at 1;
+									
+					// Inform about participation
+					do start_conversation(
+						to: info.sender, protocol: 'fipa-inform', 
+						performative: 'inform', 
+						contents: ['Participate in Auction']
+					);
+				}
 			}
 		}
 		
