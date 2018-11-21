@@ -17,10 +17,9 @@ global {
 //	int CATEGORY_MAX <- 3;
 
 	int CATEGORY_TSHIRT <- 0;
-	int CATEGORY_SWAG <- 1;
-	int CATEGORY_CAP <- 2;
+	int CATEGORY_CAP <- 1;
 	
-	int CATEGORY_MAX <- 2;
+	int CATEGORY_MAX <- 1;
 	
 	init
 	{
@@ -244,6 +243,8 @@ species FestivalGuest skills: [moving, fipa] {
 	int accepted_price <- 100 + rnd(100);
 	list<bool> wanted_categories;
 	
+	int bought_category <- -1;
+	
 	reflex go_to_auction when: auction_hall != nil
 	{
 		if (location distance_to auction_hall > 2) {
@@ -259,7 +260,7 @@ species FestivalGuest skills: [moving, fipa] {
 		{
 			target_point <- nil;
 			
-			if (myColor = #green) {
+			if (bought_category != -1) {
 				do die;
 			}
 		}
@@ -298,24 +299,9 @@ species FestivalGuest skills: [moving, fipa] {
 			if (accepted_proposals.contents at 0 = 'Item sold to you at price')
 			{
 				write "["+self+"] I won the auction";
-				myColor <- #green;
 				target_point <- SpawnPoint[1].location;
 				
-				int category <- accepted_proposals.contents at 2;
-				
-				write "Category: " + category;
-				
-				switch category
-				{
-					match CATEGORY_TSHIRT
-					{
-						write "TSHIRT!";
-					}
-					match CATEGORY_SWAG
-					{
-						write "SWAG!";	
-					}
-				}
+				bought_category <- accepted_proposals.contents at 2;
 			}
 		}
 	}
@@ -329,7 +315,7 @@ species FestivalGuest skills: [moving, fipa] {
 			{
 				write "["+self+"] Leaving auction";
 				auction_hall <- nil;
-				if (myColor != #green) {
+				if (bought_category = -1) {
 					target_point <- {rnd(100), rnd(100)};
 				}
 			}	
@@ -368,6 +354,19 @@ species FestivalGuest skills: [moving, fipa] {
 	aspect default {
 		draw pyramid(3) at: {location.x, location.y, 0} color: myColor;
     	draw sphere(1.5) at: {location.x, location.y, 3} color: myColor;
+    	
+    	switch bought_category
+		{
+			match CATEGORY_TSHIRT
+			{
+				draw pyramid(2) at: {location.x, location.y, 1.1} color: #pink;
+			}
+			match CATEGORY_CAP
+			{
+				draw cylinder(1.3, 0.1) at: {location.x + 1.2, location.y, 4.5} color: #pink;
+				draw cylinder(1.5, 1.5) at: {location.x, location.y, 4.5} color: #pink;
+			}
+		}
     }
 }
 
