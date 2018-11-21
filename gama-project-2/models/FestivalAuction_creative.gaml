@@ -9,12 +9,19 @@ model FestivalAuction
 
 
 global {
-	int CATEGORY_MUSIC_CD <- 0;
-	int CATEGORY_TSHIRT <- 1;
-	int CATEGORY_DRINKS <- 2;
-	int CATEGORY_SWAG <- 3;
+//	int CATEGORY_MUSIC_CD <- 0;
+//	int CATEGORY_TSHIRT <- 1;
+//	int CATEGORY_DRINKS <- 2;
+//	int CATEGORY_SWAG <- 3;
 	
-	int CATEGORY_MAX <- 3;
+//	int CATEGORY_MAX <- 3;
+
+	int CATEGORY_TSHIRT <- 0;
+	int CATEGORY_SWAG <- 1;
+	int CATEGORY_CAP <- 2;
+	
+	int CATEGORY_MAX <- 2;
+	
 	init
 	{
 		// Make sure we get consistent behaviour
@@ -41,7 +48,7 @@ global {
 			add_location <- add_location + 80;
 		}
 		
-		create FestivalAuctioneer number: 2
+		create FestivalAuctioneer number: 4
 		{
 			location <- first(SpawnPoint).location;
 			category <- rnd(CATEGORY_MAX);
@@ -67,7 +74,7 @@ species FestivalAuctioneer skills: [moving, fipa] {
 	rgb myColor <- #blue;
 	AuctionHall auction_hall;
 	
-	int go_to_auction_timeout <- rnd(100) update: go_to_auction_timeout - 1 min: 0;
+	int go_to_auction_timeout <- rnd(1000) update: go_to_auction_timeout - 1 min: 0;
 	
 	int start_price <- 200 + rnd(300);
 	int lowest_price <- round(start_price * 0.5);
@@ -184,7 +191,7 @@ species FestivalAuctioneer skills: [moving, fipa] {
 		
 		write "" + self + " Agent [" + winnerMessage.sender + "] will buy at price: " + current_price;	
 		write "Item sold!";
-		do accept_proposal with: (message: winnerMessage, contents: ['Item sold to you at price', current_price]);
+		do accept_proposal with: (message: winnerMessage, contents: ['Item sold to you at price', current_price, category]);
 		
 		// Reject all others
 		loop proposition over: proposes {
@@ -293,6 +300,22 @@ species FestivalGuest skills: [moving, fipa] {
 				write "["+self+"] I won the auction";
 				myColor <- #green;
 				target_point <- SpawnPoint[1].location;
+				
+				int category <- accepted_proposals.contents at 2;
+				
+				write "Category: " + category;
+				
+				switch category
+				{
+					match CATEGORY_TSHIRT
+					{
+						write "TSHIRT!";
+					}
+					match CATEGORY_SWAG
+					{
+						write "SWAG!";	
+					}
+				}
 			}
 		}
 	}
