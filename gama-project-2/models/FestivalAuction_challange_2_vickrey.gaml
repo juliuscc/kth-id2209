@@ -53,16 +53,19 @@ species FestivalAuctioneer skills: [moving, fipa] {
 	
 	int go_to_auction_timeout <- rnd(100) update: go_to_auction_timeout - 1 min: 0;
 	
-	int start_price <- 200 + rnd(300);
-	int lowest_price <- round(start_price * 0.5);
-	int current_price <- start_price;
-	int auction_iteration <- 0;
+	int lowest_price <- round(rnd(300) * 0.5);
 	
 	bool should_start_auction <- true;
 	bool auction_active <- false;
 	int auction_start_timeout <- 0 update: auction_start_timeout - 1 min: 0;
 	
-	int nr_buyers_ready <- 0;
+	bool start_message_sent <- false;
+	
+	int nr_of_bids <- 0;
+	int highest_bid <- 0;
+	int second_highest_bid <- 0;
+	bool has_higest_bid <- false;
+	message highest_bidder_message <- nil;
 	
 	list<FestivalGuest> agreed_buyers;
 	
@@ -103,42 +106,20 @@ species FestivalAuctioneer skills: [moving, fipa] {
 	}
 	
 	reflex start_auction 
-		when: 		auction_active 
-			and 	auction_start_timeout <= 0 
-			or 		(nr_buyers_ready = length(agreed_buyers) and nr_buyers_ready > 0)
-		
+			when: 	auction_active 
+			and 	auction_start_timeout <= 0
+			and 	not start_message_sent 
 	{
-		auction_iteration <- auction_iteration + 1;
+		write "Starting auction";
+		start_message_sent <- true;
+		auction_start_timeout <- 100;
+		nr_of_bids <- 0;
 		
-		if (auction_iteration > 1)
-		{
-			current_price <- round(current_price * 0.9);
-		}
-		
-		if (current_price >= lowest_price) 
-		{
-			write "Starting auction iteration: " + auction_iteration;
-			write "Sell for price: " + current_price;
-			auction_start_timeout <- 100;
-			nr_buyers_ready <- 0;
-			
-			do start_conversation(
-				to: agreed_buyers, protocol: 'fipa-contract-net', 
-				performative: 'cfp', 
-				contents: ['Sell for price', current_price]
-			);	
-		}
-		else
-		{
-			auction_active <- false;
-			write "No one is willing to buy at the right price.";
-			
-			do start_conversation(
-				to: agreed_buyers, protocol: 'fipa-inform', 
-				performative: 'inform', 
-				contents: ['Auction Ended', auction_hall]
-			);
-		}
+		do start_conversation(
+			to: agreed_buyers, protocol: 'fipa-contract-net', 
+			performative: 'cfp', 
+			contents: ['Selling Item']
+		);	
 	}
 	
 	reflex collect_failures when: !empty(failures)
@@ -154,29 +135,60 @@ species FestivalAuctioneer skills: [moving, fipa] {
 	
 	reflex collect_accepts when: !empty(proposes)
 	{
-		auction_active <- false;
-		message winnerMessage <- first(1 among proposes);
-		remove winnerMessage from: proposes;
-		
-		write "Agent ["+winnerMessage.sender+"] will buy at price: " + current_price;	
-		write "Item sold!";
-		do accept_proposal with: (message: winnerMessage, contents: ['Item sold to you at price', current_price]);
-		
+			
 		// Reject all others
 		loop proposition over: proposes {
-			do reject_proposal with: (message: proposition, contents: ['Item already sold']);
-		}
-		
-		if(agreed_buyers != nil)
-		{
-			do start_conversation(
-				to: agreed_buyers, protocol: 'fipa-inform',
-				performative: 'inform',
-				contents: ['Auction Ended', auction_hall]
-			);
 			
-			agrees <- [];
-			agreed_buyers <- [];
+			write "Agent ["+proposition.sender+"] want to buy at price: " + proposition.contents at 1;	
+			nr_of_bids <- nr_of_bids + 1;
+			
+			if (highest_bid < (proposition.contents at 1 as int)) 
+			{
+				second_highest_bid <- highest_bid;
+				highest_bid <- proposition.contents at 1 as int;
+				
+				write "New highest bid: " + highest_bid + " by " + proposition.sender;
+				
+				if (has_higest_bid)
+				{
+					write "Rejecting " + highest_bidder_message.sender;
+					do reject_proposal with: (message: highest_bidder_message, contents: ['Item sold to another user']);
+				}
+				
+				has_higest_bid <- true;
+				highest_bidder_message <- proposition;
+			}
+			
+			// End of auction.
+			if (nr_of_bids >= length(agreed_buyers))
+			{
+				auction_active <- false;
+				
+				if(agreed_buyers != nil)
+				{
+					write "Higest bid: " + highest_bid + " (lowest accepted: " + lowest_price + ")";
+					if (highest_bid >= lowest_price)
+					{
+						write "Accepting price: " + second_highest_bid + " for agent: " + highest_bidder_message.sender + " who placed a bid of " + highest_bid;
+						do accept_proposal with: (message: highest_bidder_message, contents: ['Item sold to you at price', second_highest_bid]);
+					}
+					else
+					{
+						write "Did not accept any bids";
+						do reject_proposal with: (message: highest_bidder_message, contents: ['Item sold to another user']);
+					}
+
+					write "Stopping auction";
+					do start_conversation(
+						to: agreed_buyers, protocol: 'fipa-inform',
+						performative: 'inform',
+						contents: ['Auction Ended', auction_hall]
+					);
+					
+					agrees <- [];
+					agreed_buyers <- [];
+				}	
+			}
 		}
 	}
 	
@@ -184,8 +196,8 @@ species FestivalAuctioneer skills: [moving, fipa] {
 	{
 		loop refuser over: refuses
 		{
-//			write "Agent ["+refuser.sender+"] refuses with message: " + refuser.contents;
-			nr_buyers_ready <- nr_buyers_ready + 1;
+			write "Agent ["+refuser.sender+"] refuses to participate: " + refuser.contents;
+			remove refuser.sender from: agreed_buyers;
 		}
 		refuses <- [];
 	}
@@ -288,21 +300,12 @@ species FestivalGuest skills: [moving, fipa] {
 	{
 		message proposalFromAuctioneer <- cfps[0];
 		
-		if (proposalFromAuctioneer.contents at 0 = 'Sell for price')
+		if (proposalFromAuctioneer.contents at 0 = 'Selling Item')
 		{
-			int proposedPrice <- proposalFromAuctioneer.contents at 1;
-			if (proposedPrice < accepted_price)
-			{
-				// Accept
-				write "["+self+"] Accepting price: " + proposedPrice + " would accept at " + accepted_price;
-				do propose with: (message: proposalFromAuctioneer, contents: ['Accept price', proposedPrice]);
-			}
-			else
-			{
-				// Refuse
-				write "["+self+"] Refusing price: " + proposedPrice + " would accept at " + accepted_price;
-				do refuse with: (message: proposalFromAuctioneer, contents: ['Does not accept price', proposedPrice]);
-			}
+			write "["+self+"] Proposing price: " + accepted_price;
+			do propose with: (message: proposalFromAuctioneer, contents: ['Accept price', accepted_price]);
+			
+
 		}
 		else
 		{
