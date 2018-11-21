@@ -53,8 +53,7 @@ species FestivalAuctioneer skills: [moving, fipa] {
 	
 	int go_to_auction_timeout <- rnd(100) update: go_to_auction_timeout - 1 min: 0;
 	
-	int start_price <- 200 + rnd(300);
-	int lowest_price <- round(start_price * 0.5);
+	int start_price <- 100 + rnd(150);
 	int current_price <- start_price;
 	int auction_iteration <- 0;
 	
@@ -63,6 +62,9 @@ species FestivalAuctioneer skills: [moving, fipa] {
 	int auction_start_timeout <- 0 update: auction_start_timeout - 1 min: 0;
 	
 	int nr_buyers_ready <- 0;
+	message last_agreed_message;
+	bool there_exists_last_agreed_message <- false; // workaround for hack https://github.com/gama-platform/gama/issues/2573
+	bool any_buyer <- true;
 	
 	list<FestivalGuest> agreed_buyers;
 	
@@ -104,20 +106,16 @@ species FestivalAuctioneer skills: [moving, fipa] {
 	
 	reflex start_auction 
 		when: 		auction_active 
-			and 	auction_start_timeout <= 0 
-			or 		(nr_buyers_ready = length(agreed_buyers) and nr_buyers_ready > 0)
+			and 	(auction_start_timeout <= 0 
+			or 		(nr_buyers_ready = length(agreed_buyers) and nr_buyers_ready > 0))
 		
 	{
+		
 		auction_iteration <- auction_iteration + 1;
 		
-		if (auction_iteration > 1)
+		if (any_buyer)
 		{
-			current_price <- round(current_price * 0.9);
-		}
-		
-		if (current_price >= lowest_price) 
-		{
-			write "Starting auction iteration: " + auction_iteration;
+			write "\n============================\nStarting auction iteration: " + auction_iteration;
 			write "Sell for price: " + current_price;
 			auction_start_timeout <- 100;
 			nr_buyers_ready <- 0;
@@ -126,7 +124,23 @@ species FestivalAuctioneer skills: [moving, fipa] {
 				to: agreed_buyers, protocol: 'fipa-contract-net', 
 				performative: 'cfp', 
 				contents: ['Sell for price', current_price]
-			);	
+			);
+			
+			any_buyer <- false;	
+		}
+		else if(there_exists_last_agreed_message)
+		{
+			auction_active <- false;
+								
+			write "Agent [" + last_agreed_message.sender + "] will buy at price: " + current_price;	
+			write "Item sold!";
+			do accept_proposal with: (message: last_agreed_message, contents: ['Item sold to you at price', current_price]);
+			
+			// Reject all others
+			loop proposition over: proposes {
+				do reject_proposal with: (message: proposition, contents: ['Item already sold']);
+			}
+			
 		}
 		else
 		{
@@ -138,6 +152,11 @@ species FestivalAuctioneer skills: [moving, fipa] {
 				performative: 'inform', 
 				contents: ['Auction Ended', auction_hall]
 			);
+		}
+		
+		if (auction_iteration > 1)
+		{
+			current_price <- round(current_price * 1.1);
 		}
 	}
 	
@@ -154,37 +173,24 @@ species FestivalAuctioneer skills: [moving, fipa] {
 	
 	reflex collect_accepts when: !empty(proposes)
 	{
-		auction_active <- false;
 		message winnerMessage <- first(1 among proposes);
-		remove winnerMessage from: proposes;
+		last_agreed_message <- winnerMessage;
+		there_exists_last_agreed_message <- true;
 		
-		write "Agent ["+winnerMessage.sender+"] will buy at price: " + current_price;	
-		write "Item sold!";
-		do accept_proposal with: (message: winnerMessage, contents: ['Item sold to you at price', current_price]);
-		
-		// Reject all others
-		loop proposition over: proposes {
-			do reject_proposal with: (message: proposition, contents: ['Item already sold']);
-		}
-		
-		if(agreed_buyers != nil)
+		// Delete all messages
+		loop proposition over: proposes
 		{
-			do start_conversation(
-				to: agreed_buyers, protocol: 'fipa-inform',
-				performative: 'inform',
-				contents: ['Auction Ended', auction_hall]
-			);
-			
-			agrees <- [];
-			agreed_buyers <- [];
+			let temp <- proposition.contents;
 		}
+		
+		any_buyer <- true;
 	}
 	
 	reflex collect_refusals when: !empty(refuses)
 	{
 		loop refuser over: refuses
 		{
-//			write "Agent ["+refuser.sender+"] refuses with message: " + refuser.contents;
+			write "Agent ["+refuser.sender+"] refuses with message: " + refuser.contents;
 			nr_buyers_ready <- nr_buyers_ready + 1;
 		}
 		refuses <- [];
@@ -302,6 +308,11 @@ species FestivalGuest skills: [moving, fipa] {
 				// Refuse
 				write "["+self+"] Refusing price: " + proposedPrice + " would accept at " + accepted_price;
 				do refuse with: (message: proposalFromAuctioneer, contents: ['Does not accept price', proposedPrice]);
+				write "["+self+"] Leaving auction";
+				auction_hall <- nil;
+				if (myColor != #green) {
+					target_point <- {rnd(100), rnd(100)};
+				}
 			}
 		}
 		else
