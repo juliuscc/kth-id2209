@@ -169,8 +169,8 @@ species FestivalAuctioneer skills: [moving, fipa] {
 					write "Higest bid: " + highest_bid + " (lowest accepted: " + lowest_price + ")";
 					if (highest_bid >= lowest_price)
 					{
-						write "Accepting price: " + highest_bid + " for agent: " + highest_bidder_message.sender;
-						do accept_proposal with: (message: highest_bidder_message, contents: ['Item sold to you at price', highest_bid]);
+						write "Accepting price: " + second_highest_bid + " for agent: " + highest_bidder_message.sender + " who placed a bid of " + highest_bid;
+						do accept_proposal with: (message: highest_bidder_message, contents: ['Item sold to you at price', second_highest_bid]);
 					}
 					else
 					{
