@@ -23,13 +23,20 @@ global
 				row << (((i + j) mod 2) = 0) ? #black : #white;
 			}
 			row_list << row;
+			
 		}
+		list<rgb> row <- [];
+		loop i from: 1 to: N
+		{
+			row << #yellow;
+		}
+		row_list << row;
 		
 		write row_list;
 		
 		ask cell
 		{
-			color <- row_list[grid_x][grid_y];
+			color <- row_list[grid_y][grid_x];
 		}
 		
 		int current_id <- 0;
@@ -38,23 +45,38 @@ global
 			id <- current_id;
 			current_id <- current_id + 1;
 			
-			location <- cell[id * N + id].location;
+			col <- N;			
 		}
 	}
 
 }
 
+/*
+ * 
+ * States:
+ * 1. Waiting for predecessor to activate me.
+ * 2. Getting activated and:
+ *   i ) Place itself on possible location, and then activate descendant.
+ *   ii) Inform predecessor that placement is impossible.
+ * 3. Be placed on board.
+ * 4. Have to be re-placed as descendent has no viable placements.
+ * 
+ */
+
+
 species queen
 {
 	float size <- 20.0 / N;
 	int id;
+	int col;
 	
 	aspect default {
+		location <- cell[N * col + id].location;
 		draw circle(size) color: #blue;
 	}
 }
 
-grid cell width: N height: N neighbors: 4
+grid cell width: N height: N + 1 neighbors: 4
 {
 }
 
