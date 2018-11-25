@@ -9,7 +9,7 @@ model step1
 
 global
 {
-	int N <- 15;
+	int N <- 10;
 	
 	init
 	{
@@ -49,19 +49,6 @@ global
 
 }
 
-/*
- * 
- * States:
- * 1. Waiting for predecessor to activate me.
- * 2. Getting activated and:
- *   i ) Place itself on possible location, and then activate descendant.
- *   ii) Inform predecessor that placement is impossible.
- * 3. Be placed on board.
- * 4. Have to be re-placed as descendent has no viable placements.
- * 
- */
-
-
 species Queen skills: [fipa]
 {
 	float size <- 20.0 / N;
@@ -79,12 +66,20 @@ species Queen skills: [fipa]
 		row <- 0;
 		positions << row;
 		
-		do start_conversation(
-			to: [Queen[id + 1]],
-			protocol: 'fipa-propose',
-			performative: 'propose',
-			contents: [positions]
-		);
+		if (N > 1)
+		{
+			do start_conversation(
+				to: [Queen[id + 1]],
+				protocol: 'fipa-propose',
+				performative: 'propose',
+				contents: [positions]
+			);
+		}
+		else
+		{
+			myColor <- #green;
+			write "Simulation finished!";
+		}
 	}
 	
 	reflex get_activated when: unread_proposal
@@ -199,7 +194,6 @@ species Queen skills: [fipa]
 				
 				i <- i + 1;
 			}
-			
 		}
 		else
 		{
@@ -218,6 +212,17 @@ species Queen skills: [fipa]
 				contents: [positions]
 			);
 		}
+		else if (id = 0)
+		{
+			myColor <- #red;
+			
+			do start_conversation(
+				to: [Queen[id + 1]],
+				protocol: 'fipa-inform', 
+				performative: 'inform', 
+				contents: ['No solution found!']
+			);
+		}
 		else
 		{
 			do reject_proposal with: (message: proposalFromInitiator, contents: []);
@@ -227,6 +232,39 @@ species Queen skills: [fipa]
 	reflex update_proposals when: !(empty(proposes))
 	{
 		unread_proposal <- true;
+	}
+	
+	reflex no_solutions when: !(empty(informs))
+	{
+		message error <- informs at 0;
+		
+		myColor <- #red;
+		
+		if (id < N - 1)
+		{
+			do start_conversation(
+				to: [Queen[id + 1]],
+				protocol: 'fipa-inform', 
+				performative: 'inform', 
+				contents: error.contents
+			);
+		}
+		else
+		{
+			write error.contents at 0;
+		}
+//		message accept <- accept_proposals at 0;
+//		let temp <- accept.contents;
+//		
+//		myColor <- #green;
+//		if (id > 0)
+//		{
+//			do accept_proposal with: (message: proposalFromInitiator, contents: []);
+//		}
+//		else
+//		{
+//			write "Simulation finished!";
+//		}
 	}
 	
 	aspect default {
@@ -241,6 +279,7 @@ grid Cell width: N height: N + 1 neighbors: 4
 
 experiment main type: gui
 {
+	parameter "Size of chess board: " var: N min: 1 max: 1000;
 	output
 	{
 		display main_display
