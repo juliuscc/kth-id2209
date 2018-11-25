@@ -68,6 +68,9 @@ species Queen skills: [fipa]
 	int id;
 	int row;
 	message proposalFromInitiator;
+	rgb myColor <- #blue;
+	
+	bool unread_proposal <- false;
 	
 	list<int> positions <- [];
 	
@@ -84,15 +87,15 @@ species Queen skills: [fipa]
 		);
 	}
 	
-	reflex get_activated when: !(empty(proposes))
+	reflex get_activated when: unread_proposal
 	{
+		unread_proposal <- false;
+		
 		proposalFromInitiator <- proposes at 0;
 		positions <- proposalFromInitiator.contents at 0;
 	
 		list<bool> possible_positions <- list_with(N, true);
-		
-		write "" + self + possible_positions + " " + positions;
-		
+				
 		int i <- 0;
 		loop position over: positions
 		{
@@ -113,26 +116,46 @@ species Queen skills: [fipa]
 			
 			i <- i + 1;	
 		}
-	
-		write possible_positions;
-		
+			
 		if (possible_positions contains true)
 		{
 			row <- possible_positions index_of true;
 			positions << row;
 			
-			do start_conversation(
-				to: [Queen[id + 1]],
-				protocol: 'fipa-propose',
-				performative: 'propose',
-				contents: [positions]
-			);
-			
-			write "id: " + id + " row: " + row;
+			if (id < N - 1)
+			{
+				do start_conversation(
+					to: [Queen[id + 1]],
+					protocol: 'fipa-propose',
+					performative: 'propose',
+					contents: [positions]
+				);	
+			}
+			else
+			{
+				myColor <- #green;
+				do accept_proposal with: (message: proposalFromInitiator, contents: []);
+			}
 		}
 		else
 		{
 			do reject_proposal with: (message: proposalFromInitiator, contents: []);
+		}
+	}
+	
+	reflex finished when: !(empty(accept_proposals))
+	{
+		message accept <- accept_proposals at 0;
+		let temp <- accept.contents;
+		
+		myColor <- #green;
+		if (id > 0)
+		{
+			do accept_proposal with: (message: proposalFromInitiator, contents: []);
+		}
+		else
+		{
+			write "Simulation finished!";
 		}
 	}
 	
@@ -146,11 +169,7 @@ species Queen skills: [fipa]
 		{
 			possible_positions[i] <- false;
 		}
-		
-		write "Positions before remove: " + positions;
-		positions >- length(positions) - 1;
-		write "Positions after remove:  " + positions;
-		
+				
 		int i <- 0;
 		loop position over: positions
 		{
@@ -183,8 +202,6 @@ species Queen skills: [fipa]
 				performative: 'propose',
 				contents: [positions]
 			);
-			
-			write "id: " + id + " row: " + row;
 		}
 		else
 		{
@@ -192,9 +209,14 @@ species Queen skills: [fipa]
 		}
 	}
 	
+	reflex update_proposals when: !(empty(proposes))
+	{
+		unread_proposal <- true;
+	}
+	
 	aspect default {
 		location <- Cell[N * row + id].location;
-		draw circle(size) color: #blue;
+		draw circle(size) color: myColor;
 	}
 }
 
