@@ -13,39 +13,37 @@ global
 	
 	init
 	{
-		list<list<rgb>> row_list <- [];
+		list<list<rgb>> col_list <- [];
 		loop i from: 1 to: N
 		{
-			list<rgb> row <- [];
+			list<rgb> col <- [];
 			
 			loop j from: 1 to: N
 			{
-				row << (((i + j) mod 2) = 0) ? #black : #white;
+				col << (((i + j) mod 2) = 0) ? #black : #white;
 			}
-			row_list << row;
+			col_list << col;
 			
 		}
-		list<rgb> row <- [];
+		list<rgb> col <- [];
 		loop i from: 1 to: N
 		{
-			row << #yellow;
+			col << #yellow;
 		}
-		row_list << row;
-		
-		write row_list;
-		
-		ask cell
+		col_list << col;
+				
+		ask Cell
 		{
-			color <- row_list[grid_y][grid_x];
+			color <- col_list[grid_y][grid_x];
 		}
 		
 		int current_id <- 0;
-		create queen number: N
+		create Queen number: N
 		{
 			id <- current_id;
 			current_id <- current_id + 1;
 			
-			col <- N;			
+			row <- N;
 		}
 	}
 
@@ -64,19 +62,67 @@ global
  */
 
 
-species queen
+species Queen skills: [fipa]
 {
 	float size <- 20.0 / N;
 	int id;
-	int col;
+	int row;
+	
+	list<int> positions <- [];
+	
+	reflex place_first when: time = 0 and id = 0
+	{
+		row <- 0;
+		positions << row;
+		
+		do start_conversation(
+			to: [Queen[id + 1]],
+			protocol: 'fipa-propose',
+			performative: 'propose',
+			contents: [positions]
+		);		
+	}
+	
+	reflex get_activated when: !(empty(proposes))
+	{
+		message proposalFromInitiator <- proposes at 0;
+		positions <- proposalFromInitiator.contents at 0;
+	
+		int i <- 0;
+		loop position over: positions
+		{
+			
+		}
+	
+//		loop i from: 0 to: N
+//		{
+//			bool same_col <- positions contains i;
+//			bool diagonal <- false;
+//			
+//			int i <- 0;
+//			loop position over: positions
+//			{
+//				delta_col <- position - i; 
+//				delta_row <- i - id;
+//				
+//				i <- i + 1;
+//			}
+//		}
+
+
+
+		positions << row;
+		
+		write positions;
+	}
 	
 	aspect default {
-		location <- cell[N * col + id].location;
+		location <- Cell[N * row + id].location;
 		draw circle(size) color: #blue;
 	}
 }
 
-grid cell width: N height: N + 1 neighbors: 4
+grid Cell width: N height: N + 1 neighbors: 4
 {
 }
 
@@ -86,8 +132,8 @@ experiment main type: gui
 	{
 		display main_display
 		{
-			grid cell lines: #black;
-			species queen; 
+			grid Cell lines: #black;
+			species Queen; 
 		}
 	}
 
