@@ -279,7 +279,7 @@ grid Cell width: N height: N + 1 neighbors: 4
 
 experiment main type: gui
 {
-	parameter "Size of chess board: " var: N min: 1 max: 1000;
+	parameter "Size of chess board: " var: N min: 1 max: 50;
 	output
 	{
 		display main_display
