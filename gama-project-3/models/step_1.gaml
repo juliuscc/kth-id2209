@@ -9,7 +9,7 @@ model step1
 
 global
 {
-	int N <- 5;
+	int N <- 15;
 	
 	init
 	{
@@ -92,7 +92,13 @@ species Queen skills: [fipa]
 		unread_proposal <- false;
 		
 		proposalFromInitiator <- proposes at 0;
-		positions <- proposalFromInitiator.contents at 0;
+		positions <- [];
+		loop position over: (proposalFromInitiator.contents at 0)
+		{
+			positions << int(position);
+		}
+		
+	
 	
 		list<bool> possible_positions <- list_with(N, true);
 				
@@ -160,35 +166,44 @@ species Queen skills: [fipa]
 	}
 	
 	reflex update_position when: !(empty(reject_proposals))
-	{
+	{		
 		message rejection <- reject_proposals at 0;
 		let temp <- rejection.contents;
 		
 		list<bool> possible_positions <- list_with(N, true);
-		loop i from: 0 to: row
-		{
-			possible_positions[i] <- false;
-		}
-				
-		int i <- 0;
-		loop position over: positions
-		{
-			loop j from: row + 1 to: N - 1
+		if (row < N - 1) {
+			loop i from: 0 to: row
 			{
-				int delta_col <- abs(i - id);
-				int delta_row <- abs(position - j);
-				
-				if (delta_col = 0 or delta_row = 0)
-				{
-					possible_positions[j] <- false;
-				}
-				else if (delta_col = delta_row)
-				{
-					possible_positions[j] <- false;
-				}
+				possible_positions[i] <- false;
 			}
 			
-			i <- i + 1;
+			positions >- length(positions) - 1;
+			
+			int i <- 0;
+			loop position over: positions
+			{
+				loop j from: row + 1 to: N - 1
+				{
+					int delta_col <- abs(i - id);
+					int delta_row <- abs(position - j);
+					
+					if (delta_col = 0 or delta_row = 0)
+					{
+						possible_positions[j] <- false;
+					}
+					else if (delta_col = delta_row)
+					{
+						possible_positions[j] <- false;
+					}
+				}
+				
+				i <- i + 1;
+			}
+			
+		}
+		else
+		{
+			possible_positions <- list_with(N, false);
 		}
 		
 		if (possible_positions contains true)
