@@ -67,6 +67,7 @@ species Queen skills: [fipa]
 	float size <- 20.0 / N;
 	int id;
 	int row;
+	message proposalFromInitiator;
 	
 	list<int> positions <- [];
 	
@@ -80,40 +81,115 @@ species Queen skills: [fipa]
 			protocol: 'fipa-propose',
 			performative: 'propose',
 			contents: [positions]
-		);		
+		);
 	}
 	
 	reflex get_activated when: !(empty(proposes))
 	{
-		message proposalFromInitiator <- proposes at 0;
+		proposalFromInitiator <- proposes at 0;
 		positions <- proposalFromInitiator.contents at 0;
 	
+		list<bool> possible_positions <- list_with(N, true);
+		
+		write "" + self + possible_positions + " " + positions;
+		
 		int i <- 0;
 		loop position over: positions
 		{
+			loop j from: 0 to: N - 1
+			{
+				int delta_col <- abs(i - id);
+				int delta_row <- abs(position - j);
+				
+				if (delta_col = 0 or delta_row = 0)
+				{
+					possible_positions[j] <- false;
+				}
+				else if (delta_col = delta_row)
+				{
+					possible_positions[j] <- false;
+				}
+			}
 			
+			i <- i + 1;	
 		}
 	
-//		loop i from: 0 to: N
-//		{
-//			bool same_col <- positions contains i;
-//			bool diagonal <- false;
-//			
-//			int i <- 0;
-//			loop position over: positions
-//			{
-//				delta_col <- position - i; 
-//				delta_row <- i - id;
-//				
-//				i <- i + 1;
-//			}
-//		}
-
-
-
-		positions << row;
+		write possible_positions;
 		
-		write positions;
+		if (possible_positions contains true)
+		{
+			row <- possible_positions index_of true;
+			positions << row;
+			
+			do start_conversation(
+				to: [Queen[id + 1]],
+				protocol: 'fipa-propose',
+				performative: 'propose',
+				contents: [positions]
+			);
+			
+			write "id: " + id + " row: " + row;
+		}
+		else
+		{
+			do reject_proposal with: (message: proposalFromInitiator, contents: []);
+		}
+	}
+	
+	reflex update_position when: !(empty(reject_proposals))
+	{
+		message rejection <- reject_proposals at 0;
+		let temp <- rejection.contents;
+		
+		list<bool> possible_positions <- list_with(N, true);
+		loop i from: 0 to: row
+		{
+			possible_positions[i] <- false;
+		}
+		
+		write "Positions before remove: " + positions;
+		positions >- length(positions) - 1;
+		write "Positions after remove:  " + positions;
+		
+		int i <- 0;
+		loop position over: positions
+		{
+			loop j from: row + 1 to: N - 1
+			{
+				int delta_col <- abs(i - id);
+				int delta_row <- abs(position - j);
+				
+				if (delta_col = 0 or delta_row = 0)
+				{
+					possible_positions[j] <- false;
+				}
+				else if (delta_col = delta_row)
+				{
+					possible_positions[j] <- false;
+				}
+			}
+			
+			i <- i + 1;
+		}
+		
+		if (possible_positions contains true)
+		{
+			row <- possible_positions index_of true;
+			positions << row;
+			
+			do start_conversation(
+				to: [Queen[id + 1]],
+				protocol: 'fipa-propose',
+				performative: 'propose',
+				contents: [positions]
+			);
+			
+			write "id: " + id + " row: " + row;
+		}
+		else
+		{
+			do reject_proposal with: (message: proposalFromInitiator, contents: []);
+		}
 	}
 	
 	aspect default {
