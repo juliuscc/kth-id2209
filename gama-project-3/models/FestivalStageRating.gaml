@@ -157,7 +157,7 @@ species FestivalScene skills: [fipa] {
 					color: myColor_lightshow;	
 		}
 		
-    	draw cube(property_scene_size) at: {location.x, location.y, property_scene_size - 3} color: myColor;
+    	draw cube(property_scene_size) at: {location.x, location.y, - property_scene_size + 3} color: myColor;
     }
 }
 
