@@ -13,6 +13,7 @@ global {
 	int AGENT_TYPE_CRIMINAL 		<- 1;
 	int AGENT_TYPE_JOURNALIST		<- 2;
 	int AGENT_TYPE_SECURITY_GUARD 	<- 4;
+	
 	list<int> AGENT_TYPES <- [
 		AGENT_TYPE_NORMAL, 
 		AGENT_TYPE_PARTY_LOVER,
@@ -20,13 +21,14 @@ global {
 		AGENT_TYPE_JOURNALIST,
 		AGENT_TYPE_SECURITY_GUARD
 	 	];
+	 	
 	 list<float> AGENT_DISTRIBUTION <- [
 	 	0.45,
 	 	0.35,
 	 	0.1,
 	 	0.05,
 	 	0.05
-	 ];
+	 	];
 	 	
 	 list<rgb> AGENT_COLORS <- [
 	 	#red,
@@ -43,17 +45,23 @@ global {
 	int AGENT_STATE_TRANSPORT 	<- 1;
 	int AGENT_STATE_ACTIVE 		<- 2;
 	
+	int MUSIC_CATEGORY_ROCK 	<- 0;
+	int MUSIC_CATEGORY_POP 		<- 1;
+	int MUSIC_CATEGORY_RAP 		<- 2;
+	int MUSIC_CATEGORY_JAZZ 	<- 3;
+	
+	list<int> MUSIC_CATEGORIES <- [
+		MUSIC_CATEGORY_ROCK,
+		MUSIC_CATEGORY_POP,
+		MUSIC_CATEGORY_RAP,
+		MUSIC_CATEGORY_JAZZ
+		];
+	
 	init
 	{
-		create FestivalConcert number: 2 {}
-		create FestivalBar number: 3 {}
-		
-		
-		create MovingFestivalAgent number: 50
-		{
-			location <- {rnd(100),rnd(100)};
-			
-		}
+		create FestivalConcert 		number: 2 {}
+		create FestivalBar 			number: 3 {}
+		create MovingFestivalAgent 	number: 50 {}
 	}
 	
 }
@@ -81,12 +89,32 @@ species MovingFestivalAgent skills: [moving, fipa] {
 	rgb myColor 					<- AGENT_COLORS at agent_type;
 	int agent_state 				<- AGENT_STATE_IDLE;
 	
+	point target_location <- nil;
+	
 	float agent_current_happiness 	<- AGENT_HAPPINESS_NEUTRAL;
 	float agent_avg_happiness 		<- AGENT_HAPPINESS_NEUTRAL 
 			update: AGENT_HAPPINESS_UPDATE_ALPHA * agent_current_happiness + agent_avg_happiness * (1 - AGENT_HAPPINESS_UPDATE_ALPHA);
 	
+	// Traits
+	float 	agent_trait_thirst 		<- rnd(1.0);
+	float	agent_trait_generosity 	<- rnd(1.0);
+	int 	agent_trait_fav_music	<- first(1 among MUSIC_CATEGORIES);
+	
+	
+	reflex move_to_target when: target_location != nil
+	{	
+		if location distance_to target_location < 3
+		{
+			agent_state <- AGENT_STATE_ACTIVE;
+		} 
+		else 
+		{
+			do goto target:target_location;
+		}
+	}
+	
 	float interact_with_location {
-		return 0.0;
+		return AGENT_HAPPINESS_NEUTRAL;
 	}
 	
 	// Return the happiness from this agent
@@ -174,7 +202,7 @@ species MovingFestivalAgent skills: [moving, fipa] {
 				return 0;
 			}
 			match(AGENT_TYPE_JOURNALIST) {
-				return 0;
+				return 0.2;
 			}
 			match(AGENT_TYPE_SECURITY_GUARD) {
 				return 0;
@@ -233,10 +261,11 @@ species MovingFestivalAgent skills: [moving, fipa] {
 		}
 	}	
 	
-	reflex update_happiness {
+	reflex update_location_happiness when: agent_state = AGENT_STATE_ACTIVE {
 		float accumulated_happiness <- 0.0;
 		
-		list<MovingFestivalAgent> closeby_agents <- MovingFestivalAgent at_distance 5;
+		list<MovingFestivalAgent> closeby_agents <- MovingFestivalAgent at_distance 5 where (each.agent_state = AGENT_STATE_ACTIVE);
+		
 		
 		loop other_agent over: closeby_agents {
 			accumulated_happiness <- accumulated_happiness + interact_with_agent(other_agent);
