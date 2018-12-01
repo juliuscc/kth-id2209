@@ -258,12 +258,29 @@ experiment main type: gui {
 	output {
 		display map type: opengl 
 		{
-		
-//			image file: "grass.jpg";
 			species FestivalConcert;
 			species FestivalBar;
 			species MovingFestivalAgent;
 		}
+		
+		display chart refresh:every(10.0)
+		{
+			chart "Happiness" type: series size: {1, 0.5} position: {0, 0}
+			{	
+				data "Avg. Happiness" value: (MovingFestivalAgent sum_of(each.agent_current_happiness));
+			}
+			
+			chart "Agent Distribution" type: pie size: {1, 0.5} position: {0, 0.5}
+			{
+				data "Normal" 		value: length(MovingFestivalAgent where (each.agent_type = AGENT_TYPE_NORMAL)) color: AGENT_COLORS at AGENT_TYPE_NORMAL;
+				data "Party Lover" 	value: length(MovingFestivalAgent where (each.agent_type = AGENT_TYPE_PARTY_LOVER)) color: AGENT_COLORS at AGENT_TYPE_PARTY_LOVER;
+				data "Criminal" 	value: length(MovingFestivalAgent where (each.agent_type = AGENT_TYPE_CRIMINAL)) color: AGENT_COLORS at AGENT_TYPE_CRIMINAL;
+				data "Journalist" 	value: length(MovingFestivalAgent where (each.agent_type = AGENT_TYPE_JOURNALIST)) color: AGENT_COLORS at AGENT_TYPE_JOURNALIST;
+				data "Security" 	value: length(MovingFestivalAgent where (each.agent_type = AGENT_TYPE_SECURITY_GUARD)) color: AGENT_COLORS at AGENT_TYPE_SECURITY_GUARD;
+			
+			}
+		}
+		
 	}
 }
 
