@@ -1,0 +1,269 @@
+/**
+* Name: FestivalSimulation
+* Author: hrabo, jcelik
+* Description: 
+*/
+
+model FestivalSimulation
+
+global {
+	
+	int AGENT_TYPE_NORMAL 			<- 0;
+	int AGENT_TYPE_PARTY_LOVER 		<- 3;
+	int AGENT_TYPE_CRIMINAL 		<- 1;
+	int AGENT_TYPE_JOURNALIST		<- 2;
+	int AGENT_TYPE_SECURITY_GUARD 	<- 4;
+	list<int> AGENT_TYPES <- [
+		AGENT_TYPE_NORMAL, 
+		AGENT_TYPE_PARTY_LOVER,
+		AGENT_TYPE_CRIMINAL,
+		AGENT_TYPE_JOURNALIST,
+		AGENT_TYPE_SECURITY_GUARD
+	 	];
+	 list<float> AGENT_DISTRIBUTION <- [
+	 	0.45,
+	 	0.35,
+	 	0.1,
+	 	0.05,
+	 	0.05
+	 ];
+	 	
+	 list<rgb> AGENT_COLORS <- [
+	 	#red,
+	 	#black,
+	 	#white,
+	 	#purple,
+	 	#blue
+	 	];
+	 	
+	float AGENT_HAPPINESS_NEUTRAL		<- 0.5; 
+	float AGENT_HAPPINESS_UPDATE_ALPHA 	<- 0.8;
+	
+	int AGENT_STATE_IDLE 		<- 0;
+	int AGENT_STATE_TRANSPORT 	<- 1;
+	int AGENT_STATE_ACTIVE 		<- 2;
+	
+	init
+	{
+		create FestivalConcert number: 2 {}
+		create FestivalBar number: 3 {}
+		
+		
+		create MovingFestivalAgent number: 50
+		{
+			location <- {rnd(100),rnd(100)};
+			
+		}
+	}
+	
+}
+
+species FestivalBar skills: [] {
+	rgb myColor <- #green;
+	
+	aspect default{
+    	draw square(10) at: {location.x, location.y} color: myColor;
+    }
+}
+
+species FestivalConcert skills: [fipa] {
+	rgb myColor <- #black;
+	
+	aspect default{
+    	draw square(10) at: {location.x, location.y} color: myColor;
+    }
+}
+
+
+// At least 5 moving agents
+species MovingFestivalAgent skills: [moving, fipa] {
+	int agent_type 					<- AGENT_TYPES at rnd_choice(AGENT_DISTRIBUTION);
+	rgb myColor 					<- AGENT_COLORS at agent_type;
+	int agent_state 				<- AGENT_STATE_IDLE;
+	
+	float agent_current_happiness 	<- AGENT_HAPPINESS_NEUTRAL;
+	float agent_avg_happiness 		<- AGENT_HAPPINESS_NEUTRAL 
+			update: AGENT_HAPPINESS_UPDATE_ALPHA * agent_current_happiness + agent_avg_happiness * (1 - AGENT_HAPPINESS_UPDATE_ALPHA);
+	
+	float interact_with_location {
+		return 0.0;
+	}
+	
+	// Return the happiness from this agent
+	float interact_with_agent(MovingFestivalAgent other_agent) {
+		switch agent_type {
+			match(AGENT_TYPE_NORMAL) {
+				return agent_interaction_normal(other_agent);
+			}
+			match(AGENT_TYPE_PARTY_LOVER) {
+				return agent_interaction_party_lover(other_agent);
+			}
+			match(AGENT_TYPE_CRIMINAL) {
+				return agent_interaction_criminal(other_agent);
+			}
+			match(AGENT_TYPE_JOURNALIST) {
+				return agent_interaction_journalist(other_agent);
+			}
+			match(AGENT_TYPE_SECURITY_GUARD) {
+				return agent_interaction_security_guard(other_agent);
+			}
+			default {
+				return 0;		
+			}
+		}
+	}
+	
+	// The interactions for a normal person
+	float agent_interaction_normal(MovingFestivalAgent other_agent) {
+		switch other_agent.agent_type {
+			match(AGENT_TYPE_NORMAL) {
+				return 0;
+			}
+			match(AGENT_TYPE_PARTY_LOVER) {
+				return 0;
+			}
+			match(AGENT_TYPE_CRIMINAL) {
+				return 0;
+			}
+			match(AGENT_TYPE_JOURNALIST) {
+				return 0;
+			}
+			match(AGENT_TYPE_SECURITY_GUARD) {
+				return 0;
+			}
+			default {
+				return 0;		
+			}
+		}
+	}
+	
+	// The interactions for a  party lover
+	float agent_interaction_party_lover(MovingFestivalAgent other_agent) {
+		switch other_agent.agent_type {
+			match(AGENT_TYPE_NORMAL) {
+				return 0;
+			}
+			match(AGENT_TYPE_PARTY_LOVER) {
+				return 0;
+			}
+			match(AGENT_TYPE_CRIMINAL) {
+				return 0;
+			}
+			match(AGENT_TYPE_JOURNALIST) {
+				return 0;
+			}
+			match(AGENT_TYPE_SECURITY_GUARD) {
+				return 0;
+			}
+			default {
+				return 0;		
+			}
+		}return 0;
+	}
+
+	// The interactions for a criminal
+	float agent_interaction_criminal(MovingFestivalAgent other_agent) {
+		switch other_agent.agent_type {
+			match(AGENT_TYPE_NORMAL) {
+				return 0;
+			}
+			match(AGENT_TYPE_PARTY_LOVER) {
+				return 0;
+			}
+			match(AGENT_TYPE_CRIMINAL) {
+				return 0;
+			}
+			match(AGENT_TYPE_JOURNALIST) {
+				return 0;
+			}
+			match(AGENT_TYPE_SECURITY_GUARD) {
+				return 0;
+			}
+			default {
+				return 0;		
+			}
+		}
+	}
+	
+	// The interactions for a journalist
+	float agent_interaction_journalist(MovingFestivalAgent other_agent) {
+		switch other_agent.agent_type {
+			match(AGENT_TYPE_NORMAL) {
+				return 0;
+			}
+			match(AGENT_TYPE_PARTY_LOVER) {
+				return 0;
+			}
+			match(AGENT_TYPE_CRIMINAL) {
+				return 0;
+			}
+			match(AGENT_TYPE_JOURNALIST) {
+				return 0;
+			}
+			match(AGENT_TYPE_SECURITY_GUARD) {
+				return 0;
+			}
+			default {
+				return 0;		
+			}
+		}
+	}
+	
+	// The interactions for a security guard
+	float agent_interaction_security_guard(MovingFestivalAgent other_agent) {
+		switch other_agent.agent_type {
+			match(AGENT_TYPE_NORMAL) {
+				return 0;
+			}
+			match(AGENT_TYPE_PARTY_LOVER) {
+				return 0;
+			}
+			match(AGENT_TYPE_CRIMINAL) {
+				return 0;
+			}
+			match(AGENT_TYPE_JOURNALIST) {
+				return 0;
+			}
+			match(AGENT_TYPE_SECURITY_GUARD) {
+				return 0;
+			}
+			default {
+				return 0;		
+			}
+		}
+	}	
+	
+	reflex update_happiness {
+		float accumulated_happiness <- 0.0;
+		
+		list<MovingFestivalAgent> closeby_agents <- MovingFestivalAgent at_distance 5;
+		
+		loop other_agent over: closeby_agents {
+			accumulated_happiness <- accumulated_happiness + interact_with_agent(other_agent);
+		}
+		
+		accumulated_happiness <- accumulated_happiness + interact_with_location();
+		
+		agent_current_happiness <- accumulated_happiness / (length(closeby_agents) + 1);
+	}
+	
+	aspect default {
+		draw pyramid(3) at: {location.x, location.y, 0} color: myColor;
+    	draw sphere(1.5) at: {location.x, location.y, 3} color: myColor;
+	}
+}
+
+
+experiment main type: gui {
+	output {
+		display map type: opengl 
+		{
+		
+//			image file: "grass.jpg";
+			species FestivalConcert;
+			species FestivalBar;
+			species MovingFestivalAgent;
+		}
+	}
+}
+
