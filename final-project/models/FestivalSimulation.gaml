@@ -15,11 +15,11 @@ global {
 	int AGENT_TYPE_SECURITY_GUARD 	<- 4;
 	
 	list<int> AGENT_TYPES <- [
-		AGENT_TYPE_NORMAL, 
-		AGENT_TYPE_PARTY_LOVER,
-		AGENT_TYPE_CRIMINAL,
-		AGENT_TYPE_JOURNALIST,
-		AGENT_TYPE_SECURITY_GUARD
+		AGENT_TYPE_NORMAL, 				// Gets slightly more happy by normal people around them. Will get less happy by party lovers. Likes bars more than scenes.
+		AGENT_TYPE_PARTY_LOVER,			// Get very much more happy by more people. Especially pary lovers. Prefers scenes but will get happy if bar is full.
+		AGENT_TYPE_CRIMINAL,			// 
+		AGENT_TYPE_JOURNALIST,			// 
+		AGENT_TYPE_SECURITY_GUARD		// 
 	 	];
 	 	
 	 list<float> AGENT_DISTRIBUTION <- [
@@ -41,9 +41,10 @@ global {
 	float AGENT_HAPPINESS_NEUTRAL		<- 0.5; 
 	float AGENT_HAPPINESS_UPDATE_ALPHA 	<- 0.8;
 	
-	int AGENT_STATE_IDLE 		<- 0;
-	int AGENT_STATE_TRANSPORT 	<- 1;
-	int AGENT_STATE_ACTIVE 		<- 2;
+	int AGENT_STATE_IDLE 					<- 0;
+	int AGENT_STATE_TRANSPORT 				<- 1;
+	int AGENT_STATE_ACTIVE 					<- 2;
+	int AGENT_STATE_SHOULD_UPDATE_Q_TABLE	<- 3;
 	
 	int MUSIC_CATEGORY_ROCK 	<- 0;
 	int MUSIC_CATEGORY_POP 		<- 1;
@@ -81,6 +82,11 @@ global {
 species FestivalBar skills: [] {
 	rgb myColor <- #green;
 	
+	// Calculates if crowded, medium, empty
+	// Calculates most common agent of normal or party lover
+	// Does there exist a criminal?
+	// Does there exist a security guard?
+	
 	int agentsInLocation <- 0 update: length(MovingFestivalAgent at_distance(5));
 	
 	aspect default{
@@ -101,9 +107,15 @@ species FestivalConcert skills: [fipa] {
 
 // At least 5 moving agents
 species MovingFestivalAgent skills: [moving, fipa] {
+	// TODO: rnd_choise has normal distribution. I think we want even distribution. I might be wrong. I am confused.
 	int agent_type 					<- AGENT_TYPES at rnd_choice(AGENT_DISTRIBUTION);
 	rgb myColor 					<- AGENT_COLORS at agent_type;
 	int agent_state 				<- AGENT_STATE_IDLE;
+	
+	//  Q is a two-dimensions matrix with 5 columns and 5 rows, where each cell is initialized to 0.
+	// Columns represent state and row represents actions.
+	matrix Q <- 0 as_matrix({10,5});
+	map oldState;
 	
 	point target_location <- nil;
 	
@@ -112,10 +124,10 @@ species MovingFestivalAgent skills: [moving, fipa] {
 			update: AGENT_HAPPINESS_UPDATE_ALPHA * agent_current_happiness + agent_avg_happiness * (1 - AGENT_HAPPINESS_UPDATE_ALPHA);
 	
 	// Traits
-	float 	agent_trait_thirst 		<- rnd(1.0);
-	float	agent_trait_generosity 	<- rnd(1.0);
+	float 	agent_trait_thirst 		<- rnd(10.0);
+	float	agent_trait_generosity 	<- rnd(10.0);
 	int 	agent_trait_fav_music	<- first(1 among MUSIC_CATEGORIES);
-	
+	float 	drunkness 				<- rnd(10.0);
 	
 	reflex move_to_target when: target_location != nil
 	{	
@@ -277,19 +289,30 @@ species MovingFestivalAgent skills: [moving, fipa] {
 		}
 	}	
 	
-	reflex update_location_happiness when: agent_state = AGENT_STATE_ACTIVE {
-		float accumulated_happiness <- 0.0;
-		
-		list<MovingFestivalAgent> closeby_agents <- MovingFestivalAgent at_distance 5 where (each.agent_state = AGENT_STATE_ACTIVE);
+	reflex update_Q_table when: agent_state = AGENT_STATE_SHOULD_UPDATE_Q_TABLE {
 		
 		
-		loop other_agent over: closeby_agents {
-			accumulated_happiness <- accumulated_happiness + interact_with_agent(other_agent);
-		}
+	}
+	
+	reflex update_happiness when: agent_state = AGENT_STATE_ACTIVE {
 		
-		accumulated_happiness <- accumulated_happiness + interact_with_location();
+		// 1.
 		
-		agent_current_happiness <- accumulated_happiness / (length(closeby_agents) + 1);
+		// 1. Calculate new state
+		
+		// 2. 
+		
+//		float accumulated_happiness <- 0.0;
+//		
+//		list<MovingFestivalAgent> closeby_agents <- MovingFestivalAgent at_distance 5 where (each.agent_state = AGENT_STATE_ACTIVE);
+//		
+//		loop other_agent over: closeby_agents {
+//			accumulated_happiness <- accumulated_happiness + interact_with_agent(other_agent);
+//		}
+//		
+//		accumulated_happiness <- accumulated_happiness + interact_with_location();
+//		
+//		agent_current_happiness <- accumulated_happiness / (length(closeby_agents) + 1);
 	}
 	
 	aspect default {
