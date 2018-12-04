@@ -64,6 +64,7 @@ global {
 		create MovingFestivalAgent 	number: 50 {}
 	}
 	
+	geometry shape <- envelope(square(200));
 }
 
 species FestivalBar skills: [] {
