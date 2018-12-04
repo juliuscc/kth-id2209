@@ -57,6 +57,7 @@ global {
 		MUSIC_CATEGORY_JAZZ
 		];
 	
+	// Important that Concert and Bar gets updated before agent as they are used to count agent on location.
 	init
 	{
 		create FestivalConcert 		number: 2 {}
@@ -66,10 +67,21 @@ global {
 	
 	// Make the world bigger
 	geometry shape <- envelope(square(200));
+	
+	int minute <- 3;
+	int hour <- minute * 60;
+	int day <- hour * 24;
+	int simulation_time <- day * 3;
+	
+	reflex t when : cycle >= simulation_time {
+		 do pause;
+	}
 }
 
 species FestivalBar skills: [] {
 	rgb myColor <- #green;
+	
+	int agentsInLocation <- 0 update: length(MovingFestivalAgent at_distance(5));
 	
 	aspect default{
     	draw square(10) at: {location.x, location.y} color: myColor;
@@ -78,6 +90,8 @@ species FestivalBar skills: [] {
 
 species FestivalConcert skills: [fipa] {
 	rgb myColor <- #black;
+	
+	int agentsInLocation <- 0 update: length(MovingFestivalAgent at_distance(5));
 	
 	aspect default{
     	draw square(10) at: {location.x, location.y} color: myColor;
