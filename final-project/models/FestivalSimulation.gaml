@@ -64,6 +64,7 @@ global {
 		create MovingFestivalAgent 	number: 50 {}
 	}
 	
+	// Make the world bigger
 	geometry shape <- envelope(square(200));
 }
 
