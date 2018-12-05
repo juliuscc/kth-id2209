@@ -141,7 +141,6 @@ species MovingFestivalAgent skills: [moving, fipa] {
 	{
 		if location distance_to target_location < 3
 		{
-			transporting_agent <- false;
 			target_location <- nil;
 		} 
 		else
@@ -177,7 +176,7 @@ species MovingFestivalAgent skills: [moving, fipa] {
 	}
 		
 	// Return the happiness from this agent
-	float R(map state, int agent_action) {
+	float R(map<string, int> state, int agent_action) {
 		switch agent_type {
 			match(AGENT_TYPE_NORMAL) {
 				return R_normal(state, agent_action);
@@ -193,28 +192,53 @@ species MovingFestivalAgent skills: [moving, fipa] {
 		}
 	}
 	
-	float R_normal(map state, int agent_action) {
-		write state["hello"];
+	float R_normal(map<string, int> state, int agent_action) {
+		
 		return 0.0;
 	}
 	
-	float R_party_lover(map state, int agent_action) {
+	float R_party_lover(map<string, int> state, int agent_action) {
 		return 0.0;
 	}
 	
-	float R_criminal(map state, int agent_action) {
+	float R_criminal(map<string, int> state, int agent_action) {
 		return 0.0;
 	}
 	
-	float R_journalist(map state, int agent_action) {
-		return 0.0;
+	float R_journalist(map<string, int> state, int agent_action) {
+		float happiness <- 0.0;
+		if(state["thirsty"] = 1) {
+			happiness <- happiness - 0.5;
+		}
+		
+		if(state["drunkness"] > 0) {
+			happiness <- happiness - (state["drunkness"] * 1.0);
+		}
+		
+		if(state["crowded"] = 1) {
+			happiness <- happiness + 0.3;
+		}
+		
+		if(state["in_bar"] = 0) {
+			if(state["likes_music"] = 1) {
+				happiness <- happiness + 1;				
+			} else {
+				happiness <- happiness + 1.4;
+			}
+		}
+		
+		if(state["criminal_danger"] = 1) {
+			happiness <- happiness + 2;
+		}
+			
+		return happiness;
 	}
 	
 	float R_security(map state, int agent_action) {
 		return 0.0;
 	}
 		
-	reflex update_happiness when: !transporting_agent {
+	reflex update_happiness when: target_location = nil {
 		
 	}
 	
