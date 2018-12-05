@@ -128,10 +128,6 @@ species MovingFestivalAgent skills: [moving, fipa] {
 	
 	point target_location <- nil;
 	
-	float agent_current_happiness 	<- AGENT_HAPPINESS_NEUTRAL;
-	float agent_avg_happiness 		<- AGENT_HAPPINESS_NEUTRAL 
-			update: AGENT_HAPPINESS_UPDATE_ALPHA * agent_current_happiness + agent_avg_happiness * (1 - AGENT_HAPPINESS_UPDATE_ALPHA);
-	
 	// Traits
 	float 	agent_trait_thirst 		<- rnd(10.0);
 	float	agent_trait_generosity 	<- rnd(10.0);
@@ -145,14 +141,10 @@ species MovingFestivalAgent skills: [moving, fipa] {
 			transporting_agent <- false;
 			target_location <- nil;
 		} 
-		else 
+		else
 		{
 			do goto target:target_location;
 		}
-	}
-	
-	float interact_with_location {
-		return AGENT_HAPPINESS_NEUTRAL;
 	}
 		
 	// Return the happiness from this agent
@@ -195,23 +187,6 @@ species MovingFestivalAgent skills: [moving, fipa] {
 		
 	reflex update_happiness when: !transporting_agent {
 		
-		// 1.
-		
-		// 1. Calculate new state
-		
-		// 2. 
-		
-//		float accumulated_happiness <- 0.0;
-//		
-//		list<MovingFestivalAgent> closeby_agents <- MovingFestivalAgent at_distance 5 where (each.agent_state = AGENT_STATE_ACTIVE);
-//		
-//		loop other_agent over: closeby_agents {
-//			accumulated_happiness <- accumulated_happiness + interact_with_agent(other_agent);
-//		}
-//		
-//		accumulated_happiness <- accumulated_happiness + interact_with_location();
-//		
-//		agent_current_happiness <- accumulated_happiness / (length(closeby_agents) + 1);
 	}
 	
 	aspect default {
@@ -234,7 +209,7 @@ experiment main type: gui {
 		{
 			chart "Happiness" type: series size: {1, 0.5} position: {0, 0}
 			{	
-				data "Avg. Happiness" value: (MovingFestivalAgent sum_of(each.agent_current_happiness));
+//				data "Avg. Happiness" value: (MovingFestivalAgent sum_of(each.agent_current_happiness));
 			}
 			
 			chart "Agent Distribution" type: pie size: {1, 0.5} position: {0, 0.5}
