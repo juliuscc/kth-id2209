@@ -132,7 +132,7 @@ species MovingFestivalAgent skills: [moving, fipa] {
 
 	// Q is a two-dimensions matrix with 8 columns and 96 rows, where each cell is initialized to 0.
 	// Columns represent actions and row represents state.
-	matrix Q <- 0 as_matrix({8, 96});
+	matrix<float> Q <- 0.0 as_matrix({8, 96});
 	map<string, int> oldState;
 	
 	point target_location <- nil;
@@ -355,7 +355,14 @@ species MovingFestivalAgent skills: [moving, fipa] {
 		
 		return happiness;
 	}
+	
+	float max_Q(map<string, int> state) {
+		int row_index <- get_s_index(state);
+		list<float> row <- Q row_at row_index;
 		
+		return max(row);
+	}
+	
 	reflex update_happiness when: target_location = nil {
 		
 	}
