@@ -8,6 +8,9 @@ model FestivalSimulation
 
 global {
 	
+	float ALPHA <- 1.0;
+	float GAMMA <- 1.0;
+	
 	int AGENT_TYPE_NORMAL 			<- 0;
 	int AGENT_TYPE_PARTY_LOVER 		<- 3;
 	int AGENT_TYPE_CRIMINAL 		<- 1;
@@ -166,7 +169,7 @@ species MovingFestivalAgent skills: [moving, fipa] {
 
 	// Q is a two-dimensions matrix with 8 columns and 96 rows, where each cell is initialized to 0.
 	// Columns represent actions and row represents state.
-	matrix<float> Q <- 0.0 as_matrix({8, 96});
+	matrix Q <- 0.0 as_matrix({8, 192});
 	map<string, int> old_state <- copy(default_state);
 	int old_action;
 	
@@ -460,10 +463,16 @@ species MovingFestivalAgent skills: [moving, fipa] {
 		map<string, int> state <- get_state();
 		
 		float old_Q <- get_old_Q();
+		float new_Q <- old_Q + ALPHA * (R(old_state, old_action) + (GAMMA * max_Q(state)) - old_Q);
 		
-//		float new_Q <- 
+		Q[get_s_index(old_state)][old_action] <- new_Q;
+		
+		// Take action from state.
 		
 		
+		
+		old_state <- state;
+		// old_action <- action
 	}
 	
 	aspect default {
