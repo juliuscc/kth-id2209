@@ -52,6 +52,10 @@ global {
 		MUSIC_CATEGORY_RAP,
 		MUSIC_CATEGORY_JAZZ
 		];
+		
+	int STATE_DRUNKNESS_NONE <- 0;
+	int STATE_DRUNKNESS_BUZZED <- 1;
+	int STATE_DRUNKNESS_WASTED <- 2;
 	
 	map<string, int> default_state <- [
 		"in_bar":: 0,
@@ -59,7 +63,6 @@ global {
 		"crowded":: 0,
 		"criminal_danger":: 0,
 		"thirsty":: 0,
-		"generous_close":: 0,
 		"party_lover_close":: 0,
 		"drunkness":: 0
 	];
@@ -153,14 +156,19 @@ species MovingFestivalAgent skills: [moving, fipa] {
 //		"crowded":: false,
 //		"criminal_danger":: false,
 //		"thirsty":: false,
-//		"generous_close":: false,
 //		"party_lover_close":: false,
 //		"drunkness":: 0
 //	]
 		
 	int get_s_index(map<string,int> state) {
 		return (
-			state["in_bar"] * 1
+			state["in_bar"] 			* 2^0 +
+			state["likes_music"] 		* 2^1 +
+			state["crowded"] 			* 2^2 +
+			state["criminal_danger"]	* 2^3 +
+			state["thirsty"] 			* 2^4 +
+			state["party_lover_close"] 	* 2^5 +
+			state["drunkness"] 			* 2^6
 		);
 	}
 	
