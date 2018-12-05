@@ -76,7 +76,10 @@ global {
 		"party_lover_close"	:: 0,
 		"drunkness"			:: 0
 	];
-			
+	
+	list<point> bar_locations <- [
+		
+	];	
 	
 	// Important that Concert and Bar gets updated before agent as they are used to count agent on location.
 	init
@@ -115,6 +118,10 @@ species FestivalBar skills: [] {
 	bool has_partylover <- false update: length(closeby_agents where (each.agent_type = AGENT_TYPE_PARTY_LOVER)) > 1;
 	
 	int music			<- first(1 among MUSIC_CATEGORIES + MUSIC_CATEGORY_NONE);
+	
+	aspect default{
+    	draw square(10) at: {location.x, location.y} color: myColor;
+    }
 }
 
 species FestivalConcert skills: [fipa] {
@@ -142,7 +149,7 @@ species MovingFestivalAgent skills: [moving, fipa] {
 	// Q is a two-dimensions matrix with 8 columns and 96 rows, where each cell is initialized to 0.
 	// Columns represent actions and row represents state.
 	matrix<float> Q <- 0.0 as_matrix({8, 96});
-	map<string, int> oldState;
+	map<string, int> oldState <- copy(default_state);
 	
 	point target_location <- nil;
 	
