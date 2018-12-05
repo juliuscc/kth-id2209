@@ -53,9 +53,18 @@ global {
 		MUSIC_CATEGORY_JAZZ
 		];
 		
-	int STATE_DRUNKNESS_NONE <- 0;
-	int STATE_DRUNKNESS_BUZZED <- 1;
-	int STATE_DRUNKNESS_WASTED <- 2;
+	int STATE_DRUNKNESS_NONE 	<- 0;
+	int STATE_DRUNKNESS_BUZZED 	<- 1;
+	int STATE_DRUNKNESS_WASTED 	<- 2;
+	
+	int ACTION_GOTO_CONCERT_0 	<- 0;
+	int ACTION_GOTO_CONCERT_1 	<- 1;
+	int ACTION_GOTO_BAR_0 		<- 2;
+	int ACTION_GOTO_BAR_1 		<- 3;
+	int ACTION_GOTO_BAR_2 		<- 4;
+	int ACTION_DRINK_WATER 		<- 5;
+	int ACTION_DRINK_BEER 		<- 6;
+	int ACTION_DANCE 			<- 7;
 	
 	map<string, int> default_state <- [
 		"in_bar":: 0,
@@ -118,11 +127,10 @@ species FestivalConcert skills: [fipa] {
 
 // At least 5 moving agents
 species MovingFestivalAgent skills: [moving, fipa] {
-	// TODO: rnd_choise has normal distribution. I think we want even distribution. I might be wrong. I am confused.
 	int agent_type 					<- AGENT_TYPES at rnd_choice(AGENT_DISTRIBUTION);
 	rgb myColor 					<- AGENT_COLORS at agent_type;
 
-	//  Q is a two-dimensions matrix with 8 columns and 96 rows, where each cell is initialized to 0.
+	// Q is a two-dimensions matrix with 8 columns and 96 rows, where each cell is initialized to 0.
 	// Columns represent actions and row represents state.
 	matrix Q <- 0 as_matrix({8, 96});
 	map<string, int> oldState;
@@ -145,7 +153,7 @@ species MovingFestivalAgent skills: [moving, fipa] {
 			do goto target:target_location;
 		}
 	}
-		
+
 	int get_s_index(map<string,int> state) {
 		return (
 			state["in_bar"] 			* 2^0 +
@@ -189,7 +197,7 @@ species MovingFestivalAgent skills: [moving, fipa] {
 		if (state["in_bar"] = 1) {
 			happiness <- happiness + 1.0;
 		} else if (state["likes_music"] = 1) {
-			if(state["drunkness"] = 1) {
+			if(state["drunkness"] = STATE_DRUNKNESS_BUZZED) {
 				happiness <- happiness + 3.0;
 			} else {
 				happiness <- happiness + 1.0;
@@ -200,7 +208,7 @@ species MovingFestivalAgent skills: [moving, fipa] {
 			happiness <- happiness + 1.0;
 		}
 		
-		if (state["drunkness"] = 2) {
+		if (state["drunkness"] = STATE_DRUNKNESS_WASTED) {
 			happiness <- happiness - 10.0;
 		}
 		
@@ -208,7 +216,7 @@ species MovingFestivalAgent skills: [moving, fipa] {
 			happiness <- happiness - 2.0;
 		}
 		
-		if ((state["party_lovers_close"] = 1) and (state["drunkness"] = 0)) {
+		if ((state["party_lovers_close"] = 1) and (state["drunkness"] = STATE_DRUNKNESS_NONE)) {
 			happiness <- happiness - 1.0;
 		}
 		
@@ -235,21 +243,21 @@ species MovingFestivalAgent skills: [moving, fipa] {
 		}
 		
 		switch state["drunkness"] {
-			match 0 {
+			match STATE_DRUNKNESS_NONE {
 				if (state["likes_music"] = 0) {
 					happiness <- happiness + 1.0;
 				}  else {
 					happiness <- happiness + 2.0;
 				}
 			}
-			match 1 {
+			match STATE_DRUNKNESS_BUZZED {
 				if (state["likes_music"] = 0) {
 					happiness <- happiness + 5.0;
 				}  else {
 					happiness <- happiness + 10.0;
 				}
 			}
-			match 2 {
+			match STATE_DRUNKNESS_WASTED {
 				happiness <- happiness - 3.0;
 			}
 		}
@@ -272,8 +280,8 @@ species MovingFestivalAgent skills: [moving, fipa] {
 			happiness <- happiness + 0.5 + (state["drunkness"] * 1.0);
 		}
 		
-		if (state["drunkness"] = 1) {
-			happiness <- happiness + state["drunkness"] * 2.0;
+		if (state["drunkness"] = STATE_DRUNKNESS_BUZZED) {
+			happiness <- happiness + 2.0;
 		}
 		
 		if (state["crowded"] = 0) {
@@ -298,7 +306,7 @@ species MovingFestivalAgent skills: [moving, fipa] {
 			happiness <- happiness - 0.5;
 		}
 		
-		if (state["drunkness"] > 0) {
+		if (state["drunkness"] > STATE_DRUNKNESS_NONE) {
 			happiness <- happiness - (state["drunkness"] * 1.0);
 		}
 		
@@ -333,7 +341,7 @@ species MovingFestivalAgent skills: [moving, fipa] {
 			happiness <- happiness + 0.5;
 		}
 		
-		if (state["drunkness"] > 0) {
+		if (state["drunkness"] > STATE_DRUNKNESS_NONE) {
 			happiness <- happiness - 50.0;
 		}
 		
