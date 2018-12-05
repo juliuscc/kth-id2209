@@ -41,11 +41,6 @@ global {
 	float AGENT_HAPPINESS_NEUTRAL		<- 0.5; 
 	float AGENT_HAPPINESS_UPDATE_ALPHA 	<- 0.8;
 	
-	int AGENT_STATE_IDLE 					<- 0;
-	int AGENT_STATE_TRANSPORT 				<- 1;
-	int AGENT_STATE_ACTIVE 					<- 2;
-	int AGENT_STATE_SHOULD_UPDATE_Q_TABLE	<- 3;
-	
 	int MUSIC_CATEGORY_ROCK 	<- 0;
 	int MUSIC_CATEGORY_POP 		<- 1;
 	int MUSIC_CATEGORY_RAP 		<- 2;
@@ -110,8 +105,9 @@ species MovingFestivalAgent skills: [moving, fipa] {
 	// TODO: rnd_choise has normal distribution. I think we want even distribution. I might be wrong. I am confused.
 	int agent_type 					<- AGENT_TYPES at rnd_choice(AGENT_DISTRIBUTION);
 	rgb myColor 					<- AGENT_COLORS at agent_type;
-	int agent_state 				<- AGENT_STATE_IDLE;
 	
+	bool performing_action	 		<- false;
+		
 	//  Q is a two-dimensions matrix with 5 columns and 5 rows, where each cell is initialized to 0.
 	// Columns represent state and row represents actions.
 	matrix Q <- 0 as_matrix({10,5});
@@ -284,14 +280,15 @@ species MovingFestivalAgent skills: [moving, fipa] {
 				return 0;
 			}
 			default {
-				return 0;		
+				return 0;
 			}
 		}
 	}	
 	
 	reflex update_Q_table when: agent_state = AGENT_STATE_SHOULD_UPDATE_Q_TABLE {
+		// 1. 
 		
-		
+		agent_state <- AGENT_STATE_ACTIVE;
 	}
 	
 	reflex update_happiness when: agent_state = AGENT_STATE_ACTIVE {
