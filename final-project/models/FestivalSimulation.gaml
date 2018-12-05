@@ -147,6 +147,14 @@ species MovingFestivalAgent skills: [moving, fipa] {
 		}
 	}
 		
+	int get_s_index(map state) {
+		return 0;	
+	}
+	
+	map get_state {
+		return default_state; 
+	}
+		
 	// Return the happiness from this agent
 	float R(map state, int agent_action) {
 		switch agent_type {
