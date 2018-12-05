@@ -106,7 +106,7 @@ species MovingFestivalAgent skills: [moving, fipa] {
 	int agent_type 					<- AGENT_TYPES at rnd_choice(AGENT_DISTRIBUTION);
 	rgb myColor 					<- AGENT_COLORS at agent_type;
 	
-	bool performing_action	 		<- false;
+	bool transporting_agent	 		<- false;
 		
 	//  Q is a two-dimensions matrix with 5 columns and 5 rows, where each cell is initialized to 0.
 	// Columns represent state and row represents actions.
@@ -126,10 +126,11 @@ species MovingFestivalAgent skills: [moving, fipa] {
 	float 	drunkness 				<- rnd(10.0);
 	
 	reflex move_to_target when: target_location != nil
-	{	
+	{
 		if location distance_to target_location < 3
 		{
-			agent_state <- AGENT_STATE_ACTIVE;
+			transporting_agent <- false;
+			target_location <- nil;
 		} 
 		else 
 		{
@@ -285,13 +286,8 @@ species MovingFestivalAgent skills: [moving, fipa] {
 		}
 	}	
 	
-	reflex update_Q_table when: agent_state = AGENT_STATE_SHOULD_UPDATE_Q_TABLE {
-		// 1. 
-		
-		agent_state <- AGENT_STATE_ACTIVE;
-	}
 	
-	reflex update_happiness when: agent_state = AGENT_STATE_ACTIVE {
+	reflex update_happiness when: !transporting_agent {
 		
 		// 1.
 		
