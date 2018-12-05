@@ -53,14 +53,14 @@ global {
 		MUSIC_CATEGORY_JAZZ
 		];
 	
-	map default_state <- [
-		"in_bar":: false,
-		"likes_music":: false,
-		"crowded":: false,
-		"criminal_danger":: false,
-		"thirsty":: false,
-		"generous_close":: false,
-		"party_lover_close":: false,
+	map<string, int> default_state <- [
+		"in_bar":: 0,
+		"likes_music":: 0,
+		"crowded":: 0,
+		"criminal_danger":: 0,
+		"thirsty":: 0,
+		"generous_close":: 0,
+		"party_lover_close":: 0,
 		"drunkness":: 0
 	];
 			
@@ -146,9 +146,22 @@ species MovingFestivalAgent skills: [moving, fipa] {
 			do goto target:target_location;
 		}
 	}
+	
+//	[
+//		"in_bar":: false,
+//		"likes_music":: false,
+//		"crowded":: false,
+//		"criminal_danger":: false,
+//		"thirsty":: false,
+//		"generous_close":: false,
+//		"party_lover_close":: false,
+//		"drunkness":: 0
+//	]
 		
-	int get_s_index(map state) {
-		return 0;	
+	int get_s_index(map<string,int> state) {
+		return (
+			state["in_bar"] * 1
+		);
 	}
 	
 	map get_state {
