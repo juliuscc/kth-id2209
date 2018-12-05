@@ -8,8 +8,8 @@ model FestivalSimulation
 
 global {
 	
-	float ALPHA <- 1.0;
-	float GAMMA <- 1.0;
+	float ALPHA <- 0.2;
+	float GAMMA <- 0.5;
 	
 	int AGENT_TYPE_NORMAL 			<- 0;
 	int AGENT_TYPE_PARTY_LOVER 		<- 3;
@@ -172,19 +172,19 @@ species FestivalConcert skills: [fipa] {
 species MovingFestivalAgent skills: [moving, fipa] {
 	int agent_type 					<- AGENT_TYPES at rnd_choice(AGENT_DISTRIBUTION);
 	rgb myColor 					<- AGENT_COLORS at agent_type;
+	
+	// Traits
+	float 	agent_trait_thirst 		<- rnd(10.0) min: 0.0 max: 10.0 update: agent_trait_thirst - 0.005;
+	float 	agent_trait_drunkness 	<- rnd(10.0) min: 0.0 max: 10.0 update: agent_trait_thirst - 0.005; 
+	int 	agent_trait_fav_music	<- first(1 among MUSIC_CATEGORIES);
 
-	// Q is a two-dimensions matrix with 8 columns and 96 rows, where each cell is initialized to 0.
+	// Q is a two-dimensions matrix with 8 columns and 192 rows, where each cell is initialized to 0.
 	// Columns represent actions and row represents state.
 	matrix Q <- 0.0 as_matrix({8, 192});
 	map<string, int> old_state <- copy(default_state);
 	int old_action;
 	
 	point target_location <- nil;
-	
-	// Traits
-	float 	agent_trait_thirst 		<- rnd(10.0) min: 0.0 max: 10.0 update: agent_trait_thirst - 0.005;
-	float 	agent_trait_drunkness 	<- rnd(10.0) min: 0.0 max: 10.0 update: agent_trait_thirst - 0.005; 
-	int 	agent_trait_fav_music	<- first(1 among MUSIC_CATEGORIES);
 	
 	reflex move_to_target when: target_location != nil
 	{
@@ -260,10 +260,6 @@ species MovingFestivalAgent skills: [moving, fipa] {
 		new_state["drunkness"]          <- drunkness;
 		
 		return new_state; 
-	}
-	
-	reflex printMap {
-
 	}
 	
 	// Return the happiness from this agent
@@ -459,19 +455,13 @@ species MovingFestivalAgent skills: [moving, fipa] {
 		return max(row);
 	}
 	
-	float get_old_Q {
-		int row_index <- get_s_index(old_state);
-		list<float> row <- Q row_at row_index;
-		return row[old_action];
-	}
-	
 	reflex update_happiness when: target_location = nil {
 		map<string, int> state <- get_state();
 		
-		float old_Q <- get_old_Q();
+		float old_Q <- Q[get_s_index(old_state), old_action];
 		float new_Q <- old_Q + ALPHA * (R(old_state, old_action) + (GAMMA * max_Q(state)) - old_Q);
 		
-		Q[get_s_index(old_state)][old_action] <- new_Q;
+		Q[get_s_index(old_state), old_action] <- new_Q;
 		
 		// Take action from state.
 		
