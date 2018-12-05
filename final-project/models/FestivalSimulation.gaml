@@ -147,16 +147,6 @@ species MovingFestivalAgent skills: [moving, fipa] {
 			do goto target:target_location;
 		}
 	}
-	
-//	[
-//		"in_bar":: false,
-//		"likes_music":: false,
-//		"crowded":: false,
-//		"criminal_danger":: false,
-//		"thirsty":: false,
-//		"party_lover_close":: false,
-//		"drunkness":: 0
-//	]
 		
 	int get_s_index(map<string,int> state) {
 		return (
