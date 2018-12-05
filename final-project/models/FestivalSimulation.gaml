@@ -138,7 +138,6 @@ species MovingFestivalAgent skills: [moving, fipa] {
 	{
 		if location distance_to target_location < 3
 		{
-			transporting_agent <- false;
 			target_location <- nil;
 		} 
 		else
@@ -186,7 +185,7 @@ species MovingFestivalAgent skills: [moving, fipa] {
 	}
 	
 	float R_normal(map state, int agent_action) {
-		write state["hello"];
+		
 		return 0.0;
 	}
 	
@@ -206,7 +205,7 @@ species MovingFestivalAgent skills: [moving, fipa] {
 		return 0.0;
 	}
 		
-	reflex update_happiness when: !transporting_agent {
+	reflex update_happiness when: target_location = nil {
 		
 	}
 	
