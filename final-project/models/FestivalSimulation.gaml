@@ -96,14 +96,14 @@ global {
 	{
 		int agent_index <- 0;
 		
-		create FestivalConcert 		number: length(concert_locations) {
+		create FestivalConcert number: length(concert_locations) {
 			location <- concert_locations[agent_index];
 			agent_index <- agent_index + 1;
 		}
 		
 		agent_index <- 0;
 		
-		create FestivalBar 			number: length(bar_locations) {
+		create FestivalBar number: length(bar_locations) {
 			location <- bar_locations[agent_index];
 			agent_index <- agent_index + 1;
 		}
