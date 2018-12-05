@@ -198,7 +198,29 @@ species MovingFestivalAgent skills: [moving, fipa] {
 	}
 	
 	float R_journalist(map state, int agent_action) {
-		return 0.0;
+		float happiness <- 0.0;
+		if(state["thirsty"] = 1) {
+			happiness <- happiness - 0.5;
+		}
+		
+		if(state["crowded"] = 1) {
+			happiness <- happiness + 0.3;
+		}
+		
+		if(state["in_bar"] = 0) {
+			if(state["likes_music"] = 1) {
+				happiness <- happiness + 1;				
+			} else {
+				happiness <- happiness + 1.4;
+			}
+		}
+		
+		if(state["criminal_danger"] = 1) {
+			happiness <- happiness + 2;
+		}
+			
+			
+		return happiness;
 	}
 	
 	float R_security(map state, int agent_action) {
