@@ -53,6 +53,18 @@ global {
 		MUSIC_CATEGORY_JAZZ
 		];
 	
+	map default_state <- [
+		"in_bar":: false,
+		"likes_music":: false,
+		"crowded":: false,
+		"criminal_danger":: false,
+		"thirsty":: false,
+		"generous_close":: false,
+		"party_lover_close":: false,
+		"drunkness":: 0
+	];
+			
+	
 	// Important that Concert and Bar gets updated before agent as they are used to count agent on location.
 	init
 	{
