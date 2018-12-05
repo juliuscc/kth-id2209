@@ -203,6 +203,10 @@ species MovingFestivalAgent skills: [moving, fipa] {
 			happiness <- happiness - 0.5;
 		}
 		
+		if(state["drunkness"] > 0) {
+			happiness <- happiness - (state["drunkness"] * 1.0);
+		}
+		
 		if(state["crowded"] = 1) {
 			happiness <- happiness + 0.3;
 		}
