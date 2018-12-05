@@ -173,8 +173,8 @@ species MovingFestivalAgent skills: [moving, fipa] {
 	point target_location <- nil;
 	
 	// Traits
-	float 	agent_trait_thirst 		<- rnd(10.0) min: 0.0 max: 10.0;
-	float 	agent_trait_drunkness 	<- rnd(10.0) min: 0.0 max: 10.0; 
+	float 	agent_trait_thirst 		<- rnd(10.0) min: 0.0 max: 10.0 update: agent_trait_thirst - 0.005;
+	float 	agent_trait_drunkness 	<- rnd(10.0) min: 0.0 max: 10.0 update: agent_trait_thirst - 0.005; 
 	int 	agent_trait_fav_music	<- first(1 among MUSIC_CATEGORIES);
 	
 	reflex move_to_target when: target_location != nil
@@ -185,7 +185,7 @@ species MovingFestivalAgent skills: [moving, fipa] {
 		} 
 		else
 		{
-			do goto target:target_location;
+			do goto target:target_location speed: 5.0;
 		}
 	}
 
