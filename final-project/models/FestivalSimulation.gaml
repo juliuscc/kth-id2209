@@ -121,9 +121,7 @@ species MovingFestivalAgent skills: [moving, fipa] {
 	// TODO: rnd_choise has normal distribution. I think we want even distribution. I might be wrong. I am confused.
 	int agent_type 					<- AGENT_TYPES at rnd_choice(AGENT_DISTRIBUTION);
 	rgb myColor 					<- AGENT_COLORS at agent_type;
-	
-	bool transporting_agent	 		<- false;
-		
+
 	//  Q is a two-dimensions matrix with 8 columns and 96 rows, where each cell is initialized to 0.
 	// Columns represent actions and row represents state.
 	matrix Q <- 0 as_matrix({8, 96});
