@@ -56,6 +56,7 @@ global {
 	// Important that Concert and Bar gets updated before agent as they are used to count agent on location.
 	init
 	{
+		// TODO: Place on good locations
 		create FestivalConcert 		number: 2 {}
 		create FestivalBar 			number: 3 {}
 		create MovingFestivalAgent 	number: 50 {}
