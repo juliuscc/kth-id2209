@@ -192,12 +192,85 @@ species MovingFestivalAgent skills: [moving, fipa] {
 	}
 	
 	float R_normal(map<string, int> state, int agent_action) {
+		float happiness <- 0.0;
 		
-		return 0.0;
+		if (state["thirsty"] = 1) {
+			happiness <- happiness - 0.5;
+		}
+		
+		if (state["in_bar"] = 1) {
+			happiness <- happiness + 1.0;
+		} else if (state["likes_music"] = 1) {
+			if(state["drunkness"] = 1) {
+				happiness <- happiness + 3.0;
+			} else {
+				happiness <- happiness + 1.0;
+			}
+		}
+		
+		if (state["crowded"] = 0) {
+			happiness <- happiness + 1.0;
+		}
+		
+		if (state["drunkness"] = 2) {
+			happiness <- happiness - 10.0;
+		}
+		
+		if (state["criminal_danger"] = 1) {
+			happiness <- happiness - 2.0;
+		}
+		
+		if ((state["party_lovers_close"] = 1) and (state["drunkness"] = 0)) {
+			happiness <- happiness - 1.0;
+		}
+		
+		return happiness;
 	}
 	
 	float R_party_lover(map<string, int> state, int agent_action) {
-		return 0.0;
+		float happiness <- 0.0;
+		
+		if (state["thirsty"] = 1) {
+			happiness <- happiness - 0.5;
+		}
+		
+		if (state["in_bar"] = 0) {
+			happiness <- happiness + 1.0;
+		}
+		
+		if (state["crowded"] = 1) {
+			happiness <- happiness + 2.0;
+		}
+		
+		if (state["party_lover_close"] = 1) {
+			happiness <- happiness + 0.5;
+		}
+		
+		switch state["drunkness"] {
+			match 0 {
+				if (state["likes_music"] = 0) {
+					happiness <- happiness + 1.0;
+				}  else {
+					happiness <- happiness + 2.0;
+				}
+			}
+			match 1 {
+				if (state["likes_music"] = 0) {
+					happiness <- happiness + 5.0;
+				}  else {
+					happiness <- happiness + 10.0;
+				}
+			}
+			match 2 {
+				happiness <- happiness - 3.0;
+			}
+		}
+		
+		if (state["criminal_danger"] = 1) {
+			happiness <- happiness + 0.5;
+		}
+		
+		return happiness;
 	}
 	
 	float R_criminal(map<string, int> state, int agent_action) {
@@ -227,7 +300,7 @@ species MovingFestivalAgent skills: [moving, fipa] {
 			happiness <- happiness + 1.0;
 		}
 		
-		return 0.0;
+		return happiness;
 	}
 	
 	float R_journalist(map<string, int> state, int agent_action) {
@@ -284,7 +357,7 @@ species MovingFestivalAgent skills: [moving, fipa] {
 			happiness <- happiness + 100.0;
 		}
 		
-		return 0.0;
+		return happiness;
 	}
 		
 	reflex update_happiness when: target_location = nil {
