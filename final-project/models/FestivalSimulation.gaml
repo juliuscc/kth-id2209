@@ -78,15 +78,33 @@ global {
 	];
 	
 	list<point> bar_locations <- [
-		
+		{30, 30},
+		{30, 180},
+		{180, 30}
+	];
+	
+	list<point> concert_locations <- [
+		{100, 100},
+		{160, 160}
 	];	
 	
 	// Important that Concert and Bar gets updated before agent as they are used to count agent on location.
 	init
 	{
-		// TODO: Place on good locations
-		create FestivalConcert 		number: 2 {}
-		create FestivalBar 			number: 3 {}
+		int agent_index <- 0;
+		
+		create FestivalConcert 		number: length(concert_locations) {
+			location <- concert_locations[agent_index];
+			agent_index <- agent_index + 1;
+		}
+		
+		agent_index <- 0;
+		
+		create FestivalBar 			number: length(bar_locations) {
+			location <- bar_locations[agent_index];
+			agent_index <- agent_index + 1;
+		}
+		
 		create MovingFestivalAgent 	number: 50 {}
 	}
 	
