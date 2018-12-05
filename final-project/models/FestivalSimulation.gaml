@@ -108,7 +108,13 @@ global {
 			agent_index <- agent_index + 1;
 		}
 		
-		create MovingFestivalAgent 	number: 50 {}
+		create MovingFestivalAgent 	number: 50 {
+			if (flip(0.4)) {
+				target_location <- FestivalConcert[rnd(length(concert_locations) - 1)].location;				
+			} else {
+				target_location <- FestivalBar[rnd(length(bar_locations) - 1)].location;
+			}
+		}
 	}
 	
 	// Make the world bigger
