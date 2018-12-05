@@ -41,10 +41,11 @@ global {
 	float AGENT_HAPPINESS_NEUTRAL		<- 0.5; 
 	float AGENT_HAPPINESS_UPDATE_ALPHA 	<- 0.8;
 	
-	int MUSIC_CATEGORY_ROCK 	<- 0;
-	int MUSIC_CATEGORY_POP 		<- 1;
-	int MUSIC_CATEGORY_RAP 		<- 2;
-	int MUSIC_CATEGORY_JAZZ 	<- 3;
+	int MUSIC_CATEGORY_NONE		<- 0;
+	int MUSIC_CATEGORY_ROCK 	<- 1;
+	int MUSIC_CATEGORY_POP 		<- 2;
+	int MUSIC_CATEGORY_RAP 		<- 3;
+	int MUSIC_CATEGORY_JAZZ 	<- 4;
 	
 	list<int> MUSIC_CATEGORIES <- [
 		MUSIC_CATEGORY_ROCK,
@@ -67,13 +68,13 @@ global {
 	int ACTION_DANCE 			<- 7;
 	
 	map<string, int> default_state <- [
-		"in_bar":: 0,
-		"likes_music":: 0,
-		"crowded":: 0,
-		"criminal_danger":: 0,
-		"thirsty":: 0,
-		"party_lover_close":: 0,
-		"drunkness":: 0
+		"in_bar"			:: 0,
+		"likes_music"		:: 0,
+		"crowded"			:: 0,
+		"criminal_danger"	:: 0,
+		"thirsty"			:: 0,
+		"party_lover_close"	:: 0,
+		"drunkness"			:: 0
 	];
 			
 	
@@ -107,17 +108,25 @@ species FestivalBar skills: [] {
 	// Does there exist a criminal?
 	// Does there exist a security guard?
 	
-	int agentsInLocation <- 0 update: length(MovingFestivalAgent at_distance(5));
+	list<MovingFestivalAgent> closeby_agents <- MovingFestivalAgent at_distance(5);
+	bool crowded 		<- false update: length(closeby_agents) > 5;
+	bool has_security 	<- false update: length(closeby_agents where (each.agent_type = AGENT_TYPE_SECURITY_GUARD)) > 1;
+	bool has_criminal 	<- false update: length(closeby_agents where (each.agent_type = AGENT_TYPE_CRIMINAL)) > 1;
+	bool has_partylover <- false update: length(closeby_agents where (each.agent_type = AGENT_TYPE_PARTY_LOVER)) > 1;
 	
-	aspect default{
-    	draw square(10) at: {location.x, location.y} color: myColor;
-    }
+	int music			<- first(1 among MUSIC_CATEGORIES + MUSIC_CATEGORY_NONE);
 }
 
 species FestivalConcert skills: [fipa] {
 	rgb myColor <- #black;
 	
-	int agentsInLocation <- 0 update: length(MovingFestivalAgent at_distance(5));
+	list<MovingFestivalAgent> closeby_agents <- MovingFestivalAgent at_distance(5);
+	bool crowded 		<- false update: length(closeby_agents) > 5;
+	bool has_security 	<- false update: length(closeby_agents where (each.agent_type = AGENT_TYPE_SECURITY_GUARD)) > 1;
+	bool has_criminal 	<- false update: length(closeby_agents where (each.agent_type = AGENT_TYPE_CRIMINAL)) > 1;
+	bool has_partylover <- false update: length(closeby_agents where (each.agent_type = AGENT_TYPE_PARTY_LOVER)) > 1;
+	
+	int music			<- first(1 among MUSIC_CATEGORIES);
 	
 	aspect default{
     	draw square(10) at: {location.x, location.y} color: myColor;
@@ -138,9 +147,9 @@ species MovingFestivalAgent skills: [moving, fipa] {
 	point target_location <- nil;
 	
 	// Traits
-	float 	agent_trait_thirst 		<- rnd(10.0);
+	float 	agent_trait_thirst 		<- rnd(10.0) min: 0.0 max: 10.0;
+	float 	agent_trait_drunkness 	<- rnd(10.0) min: 0.0 max: 10.0; 
 	int 	agent_trait_fav_music	<- first(1 among MUSIC_CATEGORIES);
-	float 	drunkness 				<- rnd(10.0);
 	
 	reflex move_to_target when: target_location != nil
 	{
@@ -162,14 +171,66 @@ species MovingFestivalAgent skills: [moving, fipa] {
 			state["criminal_danger"]	* 2^3 +
 			state["thirsty"] 			* 2^4 +
 			state["party_lover_close"] 	* 2^5 +
-			state["drunkness"] 			* 2^6
+			state["drunkness"] 			* 2^6 // Drunkness is any value in [0,3] which means that further expansions must be alligned to that
 		);
 	}
 	
 	map get_state {
-		return default_state; 
-	}
+		map new_state <- copy(default_state);
 		
+		FestivalBar 	bar_closeby 	<- first(FestivalBar at_distance(5));
+		FestivalConcert concert_closeby <- first(FestivalConcert at_distance(5));
+		
+		bool likes_music;
+		bool crowded;
+		bool criminal_danger;
+		bool party_lover_close;
+		if (bar_closeby != nil) {
+			likes_music 		<- bar_closeby.music = agent_trait_fav_music;
+			crowded 			<- bar_closeby.crowded;
+			party_lover_close 	<- bar_closeby.has_partylover;
+			
+			if (agent_type = AGENT_TYPE_CRIMINAL) {
+				criminal_danger	<- bar_closeby.has_security;
+			} else {
+				criminal_danger	<- bar_closeby.has_criminal and not bar_closeby.has_security;
+			}
+		} else {
+			likes_music 		<- concert_closeby.music = agent_trait_fav_music;
+			crowded 			<- concert_closeby.crowded;
+			party_lover_close 	<- concert_closeby.has_partylover;
+			
+			if (agent_type = AGENT_TYPE_CRIMINAL) {
+				criminal_danger	<- concert_closeby.has_security;
+			} else {
+				criminal_danger	<- concert_closeby.has_criminal and not concert_closeby.has_security;
+			}
+		}
+		
+		int drunkness <- STATE_DRUNKNESS_NONE;
+		if (agent_trait_drunkness > 4) {
+			drunkness <- STATE_DRUNKNESS_BUZZED;
+		} 
+		
+		if (agent_trait_drunkness > 8) {
+			drunkness <- STATE_DRUNKNESS_WASTED;
+		}
+		
+		new_state["in_bar"]             <- (bar_closeby != nil) as int;
+		new_state["likes_music"]        <- likes_music as int;
+		new_state["crowded"]            <- crowded as int;
+		new_state["criminal_danger"]    <- criminal_danger as int;
+		new_state["thirsty"]            <- (agent_trait_thirst > 5) as int;
+		new_state["party_lover_close"]  <- party_lover_close as int;
+		new_state["drunkness"]          <- drunkness;
+		
+		return new_state; 
+	}
+	
+	reflex printMap {
+
+	}
+	
 	// Return the happiness from this agent
 	float R(map<string, int> state, int agent_action) {
 		switch agent_type {
