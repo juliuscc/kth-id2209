@@ -154,152 +154,45 @@ species MovingFestivalAgent skills: [moving, fipa] {
 	float interact_with_location {
 		return AGENT_HAPPINESS_NEUTRAL;
 	}
-	
+		
 	// Return the happiness from this agent
-	float interact_with_agent(MovingFestivalAgent other_agent) {
+	float R(map state, int agent_action) {
 		switch agent_type {
 			match(AGENT_TYPE_NORMAL) {
-				return agent_interaction_normal(other_agent);
-			}
-			match(AGENT_TYPE_PARTY_LOVER) {
-				return agent_interaction_party_lover(other_agent);
-			}
-			match(AGENT_TYPE_CRIMINAL) {
-				return agent_interaction_criminal(other_agent);
-			}
-			match(AGENT_TYPE_JOURNALIST) {
-				return agent_interaction_journalist(other_agent);
-			}
-			match(AGENT_TYPE_SECURITY_GUARD) {
-				return agent_interaction_security_guard(other_agent);
-			}
-			default {
-				return 0;		
+				return R_normal(state, agent_action);
+			} match(AGENT_TYPE_PARTY_LOVER) {
+				return R_normal(state, agent_action);
+			} match (AGENT_TYPE_CRIMINAL) {
+				return R_criminal(state, agent_action);
+			} match (AGENT_TYPE_JOURNALIST) {
+				return R_journalist(state, agent_action);
+			} match (AGENT_TYPE_SECURITY_GUARD) {
+				return R_security(state, agent_action);
 			}
 		}
 	}
 	
-	// The interactions for a normal person
-	float agent_interaction_normal(MovingFestivalAgent other_agent) {
-		switch other_agent.agent_type {
-			match(AGENT_TYPE_NORMAL) {
-				return 0;
-			}
-			match(AGENT_TYPE_PARTY_LOVER) {
-				return 0;
-			}
-			match(AGENT_TYPE_CRIMINAL) {
-				return 0;
-			}
-			match(AGENT_TYPE_JOURNALIST) {
-				return 0;
-			}
-			match(AGENT_TYPE_SECURITY_GUARD) {
-				return 0;
-			}
-			default {
-				return 0;		
-			}
-		}
+	float R_normal(map state, int agent_action) {
+		write state["hello"];
+		return 0.0;
 	}
 	
-	// The interactions for a  party lover
-	float agent_interaction_party_lover(MovingFestivalAgent other_agent) {
-		switch other_agent.agent_type {
-			match(AGENT_TYPE_NORMAL) {
-				return 0;
-			}
-			match(AGENT_TYPE_PARTY_LOVER) {
-				return 0;
-			}
-			match(AGENT_TYPE_CRIMINAL) {
-				return 0;
-			}
-			match(AGENT_TYPE_JOURNALIST) {
-				return 0;
-			}
-			match(AGENT_TYPE_SECURITY_GUARD) {
-				return 0;
-			}
-			default {
-				return 0;		
-			}
-		}return 0;
-	}
-
-	// The interactions for a criminal
-	float agent_interaction_criminal(MovingFestivalAgent other_agent) {
-		switch other_agent.agent_type {
-			match(AGENT_TYPE_NORMAL) {
-				return 0;
-			}
-			match(AGENT_TYPE_PARTY_LOVER) {
-				return 0;
-			}
-			match(AGENT_TYPE_CRIMINAL) {
-				return 0;
-			}
-			match(AGENT_TYPE_JOURNALIST) {
-				return 0.2;
-			}
-			match(AGENT_TYPE_SECURITY_GUARD) {
-				return 0;
-			}
-			default {
-				return 0;		
-			}
-		}
+	float R_party_lover(map state, int agent_action) {
+		return 0.0;
 	}
 	
-	// The interactions for a journalist
-	float agent_interaction_journalist(MovingFestivalAgent other_agent) {
-		switch other_agent.agent_type {
-			match(AGENT_TYPE_NORMAL) {
-				return 0;
-			}
-			match(AGENT_TYPE_PARTY_LOVER) {
-				return 0;
-			}
-			match(AGENT_TYPE_CRIMINAL) {
-				return 0;
-			}
-			match(AGENT_TYPE_JOURNALIST) {
-				return 0;
-			}
-			match(AGENT_TYPE_SECURITY_GUARD) {
-				return 0;
-			}
-			default {
-				return 0;		
-			}
-		}
+	float R_criminal(map state, int agent_action) {
+		return 0.0;
 	}
 	
-	// The interactions for a security guard
-	float agent_interaction_security_guard(MovingFestivalAgent other_agent) {
-		switch other_agent.agent_type {
-			match(AGENT_TYPE_NORMAL) {
-				return 0;
-			}
-			match(AGENT_TYPE_PARTY_LOVER) {
-				return 0;
-			}
-			match(AGENT_TYPE_CRIMINAL) {
-				return 0;
-			}
-			match(AGENT_TYPE_JOURNALIST) {
-				return 0;
-			}
-			match(AGENT_TYPE_SECURITY_GUARD) {
-				return 0;
-			}
-			default {
-				return 0;
-			}
-		}
-	}	
+	float R_journalist(map state, int agent_action) {
+		return 0.0;
+	}
 	
-	
+	float R_security(map state, int agent_action) {
+		return 0.0;
+	}
+		
 	reflex update_happiness when: !transporting_agent {
 		
 		// 1.
