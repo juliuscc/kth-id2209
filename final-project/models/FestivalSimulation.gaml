@@ -133,7 +133,6 @@ species MovingFestivalAgent skills: [moving, fipa] {
 	
 	// Traits
 	float 	agent_trait_thirst 		<- rnd(10.0);
-	float	agent_trait_generosity 	<- rnd(10.0);
 	int 	agent_trait_fav_music	<- first(1 among MUSIC_CATEGORIES);
 	float 	drunkness 				<- rnd(10.0);
 	
