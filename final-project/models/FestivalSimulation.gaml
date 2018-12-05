@@ -168,7 +168,7 @@ species MovingFestivalAgent skills: [moving, fipa] {
 	}
 		
 	// Return the happiness from this agent
-	float R(map state, int agent_action) {
+	float R(map<string, int> state, int agent_action) {
 		switch agent_type {
 			match(AGENT_TYPE_NORMAL) {
 				return R_normal(state, agent_action);
@@ -184,20 +184,20 @@ species MovingFestivalAgent skills: [moving, fipa] {
 		}
 	}
 	
-	float R_normal(map state, int agent_action) {
+	float R_normal(map<string, int> state, int agent_action) {
 		
 		return 0.0;
 	}
 	
-	float R_party_lover(map state, int agent_action) {
+	float R_party_lover(map<string, int> state, int agent_action) {
 		return 0.0;
 	}
 	
-	float R_criminal(map state, int agent_action) {
+	float R_criminal(map<string, int> state, int agent_action) {
 		return 0.0;
 	}
 	
-	float R_journalist(map state, int agent_action) {
+	float R_journalist(map<string, int> state, int agent_action) {
 		float happiness <- 0.0;
 		if(state["thirsty"] = 1) {
 			happiness <- happiness - 0.5;
@@ -218,7 +218,6 @@ species MovingFestivalAgent skills: [moving, fipa] {
 		if(state["criminal_danger"] = 1) {
 			happiness <- happiness + 2;
 		}
-			
 			
 		return happiness;
 	}
