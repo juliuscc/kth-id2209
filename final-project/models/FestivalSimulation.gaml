@@ -124,9 +124,9 @@ species MovingFestivalAgent skills: [moving, fipa] {
 	
 	bool transporting_agent	 		<- false;
 		
-	//  Q is a two-dimensions matrix with 5 columns and 5 rows, where each cell is initialized to 0.
-	// Columns represent state and row represents actions.
-	matrix Q <- 0 as_matrix({10,5});
+	//  Q is a two-dimensions matrix with 8 columns and 96 rows, where each cell is initialized to 0.
+	// Columns represent actions and row represents state.
+	matrix Q <- 0 as_matrix({8, 96});
 	map<string, int> oldState;
 	
 	point target_location <- nil;
