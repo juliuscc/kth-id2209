@@ -150,6 +150,7 @@ species MovingFestivalAgent skills: [moving, fipa] {
 	// Columns represent actions and row represents state.
 	matrix<float> Q <- 0.0 as_matrix({8, 96});
 	map<string, int> oldState <- copy(default_state);
+	int oldAction;
 	
 	point target_location <- nil;
 	
@@ -182,7 +183,7 @@ species MovingFestivalAgent skills: [moving, fipa] {
 		);
 	}
 	
-	map get_state {
+	map<string, int> get_state {
 		map new_state <- copy(default_state);
 		
 		FestivalBar 	bar_closeby 	<- first(FestivalBar at_distance(5));
@@ -431,7 +432,20 @@ species MovingFestivalAgent skills: [moving, fipa] {
 		return max(row);
 	}
 	
+	float get_old_Q {
+		int row_index <- get_s_index(old_state);
+		list<float> row <- Q row_at row_index;
+		
+		return 0.0;
+	}
+	
 	reflex update_happiness when: target_location = nil {
+		map<string, int> state <- get_state();
+		
+		float old_Q <- get_old_Q();
+		
+		float new_Q <- 
+		
 		
 	}
 	
