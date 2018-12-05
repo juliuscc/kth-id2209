@@ -458,10 +458,12 @@ species MovingFestivalAgent skills: [moving, fipa] {
 	reflex update_happiness when: target_location = nil {
 		map<string, int> state <- get_state();
 		
-		float old_Q <- Q[get_s_index(old_state), old_action];
+		int old_s_index <- get_s_index(old_state);
+		float old_Q <- Q[old_action, old_s_index];
 		float new_Q <- old_Q + ALPHA * (R(old_state, old_action) + (GAMMA * max_Q(state)) - old_Q);
 		
-		Q[get_s_index(old_state), old_action] <- new_Q;
+//		put new_Q at: {old_s_index, old_action} in: Q;
+		Q[old_action, old_s_index] <- new_Q; 
 		
 		// Take action from state.
 		
