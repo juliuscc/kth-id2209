@@ -127,7 +127,7 @@ species MovingFestivalAgent skills: [moving, fipa] {
 	//  Q is a two-dimensions matrix with 5 columns and 5 rows, where each cell is initialized to 0.
 	// Columns represent state and row represents actions.
 	matrix Q <- 0 as_matrix({10,5});
-	map oldState;
+	map<string, int> oldState;
 	
 	point target_location <- nil;
 	
@@ -202,24 +202,51 @@ species MovingFestivalAgent skills: [moving, fipa] {
 	}
 	
 	float R_criminal(map<string, int> state, int agent_action) {
+		float happiness <- 0.0;
+		
+		if (state["thirsty"] = 1) {
+			happiness <- happiness - 1.0;
+		}
+		
+		if (state["likes_music"] = 1) {
+			happiness <- happiness + 0.5 + (state["drunkness"] * 1.0);
+		}
+		
+		if (state["drunkness"] = 1) {
+			happiness <- happiness + state["drunkness"] * 2.0;
+		}
+		
+		if (state["crowded"] = 0) {
+			happiness <- happiness - 2.0;
+		}
+		
+		if (state["criminal_danger"] = 0) {
+			happiness <- happiness - 200.0 - (state["drunkness"] * 50);
+		}
+		
+		if (state["party_lovers_close"] = 1) {
+			happiness <- happiness + 1.0;
+		}
+		
 		return 0.0;
 	}
 	
 	float R_journalist(map<string, int> state, int agent_action) {
 		float happiness <- 0.0;
-		if(state["thirsty"] = 1) {
+		
+		if (state["thirsty"] = 1) {
 			happiness <- happiness - 0.5;
 		}
 		
-		if(state["drunkness"] > 0) {
+		if (state["drunkness"] > 0) {
 			happiness <- happiness - (state["drunkness"] * 1.0);
 		}
 		
-		if(state["crowded"] = 1) {
+		if (state["crowded"] = 1) {
 			happiness <- happiness + 0.3;
 		}
 		
-		if(state["in_bar"] = 0) {
+		if (state["in_bar"] = 0) {
 			if(state["likes_music"] = 1) {
 				happiness <- happiness + 1;				
 			} else {
@@ -227,14 +254,37 @@ species MovingFestivalAgent skills: [moving, fipa] {
 			}
 		}
 		
-		if(state["criminal_danger"] = 1) {
+		if (state["criminal_danger"] = 1) {
 			happiness <- happiness + 2;
 		}
 			
 		return happiness;
 	}
 	
-	float R_security(map state, int agent_action) {
+	float R_security(map<string, int> state, int agent_action) {
+		float happiness <- 0.0;
+		
+		if (state["thirsty"] = 1) {
+			happiness <- happiness - 0.5;
+		}
+		
+		
+		if (state["crowded"] = 1) {
+			happiness <- happiness + 0.5;
+		}
+		
+		if (state["drunkness"] > 0) {
+			happiness <- happiness - 50.0;
+		}
+		
+		if (state["criminal_danger"] = 1) {
+			happiness <- happiness + 100.0;
+		}
+		
+		if (state["criminal_danger"] = 1) {
+			happiness <- happiness + 100.0;
+		}
+		
 		return 0.0;
 	}
 		
