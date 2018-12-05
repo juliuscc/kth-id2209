@@ -70,6 +70,17 @@ global {
 	int ACTION_DRINK_BEER 		<- 6;
 	int ACTION_DANCE 			<- 7;
 	
+	int ACTION_COUNT <- length([
+		ACTION_GOTO_CONCERT_0,
+		ACTION_GOTO_CONCERT_1,
+		ACTION_GOTO_BAR_0,
+		ACTION_GOTO_BAR_1,
+		ACTION_GOTO_BAR_2,
+		ACTION_DRINK_WATER,
+		ACTION_DRINK_BEER,
+		ACTION_DANCE
+	]);
+	
 	map<string, int> default_state <- [
 		"in_bar"			:: 0,
 		"likes_music"		:: 0,
@@ -132,12 +143,7 @@ global {
 
 species FestivalBar skills: [] {
 	rgb myColor <- #green;
-	
-	// Calculates if crowded, medium, empty
-	// Calculates most common agent of normal or party lover
-	// Does there exist a criminal?
-	// Does there exist a security guard?
-	
+		
 	list<MovingFestivalAgent> closeby_agents <- MovingFestivalAgent at_distance(5);
 	bool crowded 		<- false update: length(closeby_agents) > 5;
 	bool has_security 	<- false update: length(closeby_agents where (each.agent_type = AGENT_TYPE_SECURITY_GUARD)) > 1;
@@ -151,7 +157,7 @@ species FestivalBar skills: [] {
     }
 }
 
-species FestivalConcert skills: [fipa] {
+species FestivalConcert skills: [] {
 	rgb myColor <- #black;
 	
 	list<MovingFestivalAgent> closeby_agents <- MovingFestivalAgent at_distance(5);
@@ -163,18 +169,20 @@ species FestivalConcert skills: [fipa] {
 	int music			<- first(1 among MUSIC_CATEGORIES);
 	
 	aspect default{
+		// TODO: show music playing!		
+		
     	draw square(10) at: {location.x, location.y} color: myColor;
     }
 }
 
 
 // At least 5 moving agents
-species MovingFestivalAgent skills: [moving, fipa] {
+species MovingFestivalAgent skills: [moving] {
 	int agent_type 					<- AGENT_TYPES at rnd_choice(AGENT_DISTRIBUTION);
 	rgb myColor 					<- AGENT_COLORS at agent_type;
 	
 	// Traits
-	float 	agent_trait_thirst 		<- rnd(10.0) min: 0.0 max: 10.0 update: agent_trait_thirst - 0.005;
+	float 	agent_trait_thirst 		<- rnd(10.0) min: 0.0 max: 10.0 update: agent_trait_thirst + 0.005;
 	float 	agent_trait_drunkness 	<- rnd(10.0) min: 0.0 max: 10.0 update: agent_trait_thirst - 0.005; 
 	int 	agent_trait_fav_music	<- first(1 among MUSIC_CATEGORIES);
 
@@ -455,20 +463,86 @@ species MovingFestivalAgent skills: [moving, fipa] {
 		return max(row);
 	}
 	
+	int choose_action(map<string, int> state) {
+		// Take action from state.
+		if (flip(0.9)) {
+			int row_index <- get_s_index(state);
+			list<float> row <- Q row_at row_index;
+			
+			int i <- 0;
+			float max <- row[0];
+			int best_index <- 0;
+			loop element over: row {
+				if (element > max) {
+					max <- element;
+					best_index <- i;
+				}
+				
+				i <- i + 1;
+			}
+			
+			return 0;
+			
+		} else {
+			return rnd(ACTION_COUNT);
+		}
+	}
+	
+	action execute_action (int agent_action) {
+		switch agent_action {
+			match(ACTION_GOTO_CONCERT_0) {
+				target_location <- FestivalConcert[0].location;
+			}
+			match(ACTION_GOTO_CONCERT_1) {
+				target_location <- FestivalConcert[1].location;
+			}
+			match(ACTION_GOTO_BAR_0) {
+				target_location <- FestivalBar[0].location;
+			}
+			match(ACTION_GOTO_BAR_1) {
+				target_location <- FestivalBar[1].location;
+			}
+			match(ACTION_GOTO_BAR_2) {
+				target_location <- FestivalBar[2].location;
+			}
+			match(ACTION_DRINK_WATER) {
+				agent_trait_thirst <- agent_trait_thirst - 3.0;
+				agent_trait_drunkness <- agent_trait_drunkness - 1;
+			}
+			match(ACTION_DRINK_BEER) {
+				agent_trait_thirst <- agent_trait_thirst - 1.5;
+				agent_trait_drunkness <- agent_trait_drunkness + 2.5;
+			}
+			match(ACTION_DANCE) {
+				
+			}
+		}
+	}
+	
 	reflex update_happiness when: target_location = nil {
 		map<string, int> state <- get_state();
 		
 		float old_Q <- Q[get_s_index(old_state), old_action];
 		float new_Q <- old_Q + ALPHA * (R(old_state, old_action) + (GAMMA * max_Q(state)) - old_Q);
 		
-		Q[get_s_index(old_state), old_action] <- new_Q;
+		write Q[get_s_index(old_state), old_action];
 		
-		// Take action from state.
+		// TODO: Fix this.
+//		Q[get_s_index(old_state), old_action] <- new_Q;
+				
+		int agent_action <- choose_action(state);
+		do execute_action(agent_action);
 		
-		
+		if (agent_type = AGENT_TYPE_SECURITY_GUARD and state["criminal_danger"] = 1) {
+			ask MovingFestivalAgent at_distance 10{
+				if (self.agent_type = AGENT_TYPE_CRIMINAL) {
+					do die;
+				}
+			}
+		}
 		
 		old_state <- state;
-		// old_action <- action
+		old_action <- agent_action;
 	}
 	
 	aspect default {
