@@ -144,7 +144,7 @@ global {
 }
 
 species FestivalBar skills: [] {
-	rgb myColor <- #green;
+	rgb myColor <- #pink;
 		
 	list<MovingFestivalAgent> closeby_agents <- MovingFestivalAgent at_distance(5);
 	bool crowded 		<- false update: length(closeby_agents) > 5;
@@ -154,13 +154,16 @@ species FestivalBar skills: [] {
 	
 	int music			<- first(1 among MUSIC_CATEGORIES + MUSIC_CATEGORY_NONE);
 	
-	aspect default{
+	aspect default {
     	draw square(10) at: {location.x, location.y} color: myColor;
     }
 }
 
 species FestivalConcert skills: [] {
+	float scene_size <- 10.0;
 	rgb myColor <- #black;
+	rgb myColor_lightshow <- #green;
+	point location_lightshow <- location;
 	
 	list<MovingFestivalAgent> closeby_agents <- MovingFestivalAgent at_distance(5);
 	bool crowded 		<- false update: length(closeby_agents) > 5;
@@ -170,9 +173,46 @@ species FestivalConcert skills: [] {
 	
 	int music			<- first(1 among MUSIC_CATEGORIES);
 	
-	aspect default{
-		// TODO: show music playing!		
-		
+	reflex update_light_color
+	{
+		if (flip(0.2) or time = 0) {
+			switch music {
+				match MUSIC_CATEGORY_ROCK {
+					if (flip(0.5)) {
+						myColor_lightshow <- #white;
+					} else {
+						myColor_lightshow <- #gray;
+					}
+				}
+				match MUSIC_CATEGORY_POP {
+					if (flip(0.5)) {
+						myColor_lightshow <- #pink;
+					} else {
+						myColor_lightshow <- #purple;
+					}
+				}
+				match MUSIC_CATEGORY_RAP {
+					if (flip(0.5)) {
+						myColor_lightshow <- #white;
+					} else {
+						myColor_lightshow <- #red;
+					}
+				}
+				match MUSIC_CATEGORY_JAZZ {
+					if (flip(0.5)) {
+						myColor_lightshow <- #yellow;
+					} else {
+						myColor_lightshow <- #brown;
+					}
+				}
+			}
+			
+			location_lightshow <- {location.x + rnd(scene_size) - scene_size / 2, location.y + rnd(scene_size) - scene_size / 2};
+		}
+	}
+	
+	aspect default {		
+		draw circle(scene_size*1.5) at: location_lightshow color: myColor_lightshow;
     	draw square(10) at: {location.x, location.y} color: myColor;
     }
 }
@@ -577,6 +617,8 @@ experiment main type: gui {
 		
 		display map type: opengl 
 		{
+			image file: "grass.jpg";
+			
 			species FestivalConcert;
 			species FestivalBar;
 			species MovingFestivalAgent;
