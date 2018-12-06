@@ -250,7 +250,7 @@ species MovingFestivalAgent skills: [moving] {
 	
 	// Traits
 	float 	agent_trait_thirst 		<- rnd(10.0) min: 0.0 max: 10.0 update: agent_trait_thirst + 0.005;
-	float 	agent_trait_drunkness 	<- rnd(10.0) min: 0.0 max: 10.0 update: agent_trait_thirst - 0.005; 
+	float 	agent_trait_drunkness 	<- rnd(10.0) min: 0.0 max: 10.0 update: agent_trait_drunkness - 0.005; 
 	int 	agent_trait_fav_music	<- first(1 among MUSIC_CATEGORIES);
 	
 	float agent_happiness <- -10.0 min: 0.0 max: 10.0;
@@ -635,12 +635,13 @@ experiment main type: gui {
 //	parameter "Randomness in walk: " var: walk_randomness min: 0.0 max: 1.0;
 	
 	output {
-		display chart refresh:every(10.0)
+		display chart refresh:every(50.0)
 		{
-			chart "Happiness" type: series size: {1, 0.5} position: {0, 0}
+			chart "Happiness" type: series size: {1, 1} position: {0, 0}
 			{	
 				data "Avg. Happiness" value: (MovingFestivalAgent sum_of(each.agent_happiness) / length(MovingFestivalAgent));
 				data "Nr. wasted" value: length(MovingFestivalAgent where (each.old_state["drunkness"] = STATE_DRUNKNESS_WASTED))/2;
+				data "Nr. buzzed" value: length(MovingFestivalAgent where (each.old_state["drunkness"] = STATE_DRUNKNESS_BUZZED))/2;
 			}
 		}
 		
