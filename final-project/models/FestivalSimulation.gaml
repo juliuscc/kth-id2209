@@ -533,15 +533,7 @@ species MovingFestivalAgent skills: [moving] {
 				
 		int agent_action <- choose_action(state);
 		do execute_action(agent_action);
-		
-		if (agent_type = AGENT_TYPE_SECURITY_GUARD and state["criminal_danger"] = 1) {
-			ask MovingFestivalAgent at_distance 10{
-				if (self.agent_type = AGENT_TYPE_CRIMINAL) {
-					do die;
-				}
-			}
-		}
-		
+				
 		old_state <- state;
 		old_action <- agent_action;
 	}
