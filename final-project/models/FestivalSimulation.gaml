@@ -11,7 +11,10 @@ global {
 	float ALPHA <- 0.2;
 	float GAMMA <- 0.5;
 	
-	float walk_randomness <- 0.2;
+	float WALK_RANDOMNESS_TRAINING <- 0.7;
+	float WALK_RANDOMNESS_SIMULATION <- 0.2;
+	
+	float walk_randomness <- WALK_RANDOMNESS_TRAINING;
 	
 	int AGENT_TYPE_NORMAL 			<- 0;
 	int AGENT_TYPE_PARTY_LOVER 		<- 3;
@@ -138,7 +141,13 @@ global {
 	int day <- hour * 24;
 	int simulation_time <- day * 3;
 	
-	reflex t when : cycle >= simulation_time {
+	int training_time <- 30000;
+	
+	reflex when: time = training_time {
+		walk_randomness <- WALK_RANDOMNESS_SIMULATION;
+	}
+	
+	reflex t when : cycle >= (training_time + simulation_time) or cycle = training_time {
 		 do pause;
 	}
 }
@@ -606,7 +615,9 @@ species MovingFestivalAgent skills: [moving] {
 
 
 experiment main type: gui {
-	parameter "Randomness in walk: " var: walk_randomness min: 0.0 max: 1.0;
+	
+//	parameter "Randomness in walk: " var: walk_randomness min: 0.0 max: 1.0;
+	
 	output {
 		display chart refresh:every(10.0)
 		{
