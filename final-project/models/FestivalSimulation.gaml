@@ -107,6 +107,13 @@ global {
 		{160, 160}
 	];	
 	
+	FestivalBar bar0;
+	FestivalBar bar1;
+	FestivalBar bar2;
+	
+	FestivalConcert con0;
+	FestivalConcert con1;
+	
 	// Important that Concert and Bar gets updated before agent as they are used to count agent on location.
 	init
 	{
@@ -155,7 +162,7 @@ global {
 species FestivalBar skills: [] {
 	rgb myColor <- #pink;
 		
-	list<MovingFestivalAgent> closeby_agents <- MovingFestivalAgent at_distance(5);
+	list<MovingFestivalAgent> closeby_agents <- [] update: MovingFestivalAgent at_distance(10);
 	bool crowded 		<- false update: length(closeby_agents) > 5;
 	bool has_security 	<- false update: length(closeby_agents where (each.agent_type = AGENT_TYPE_SECURITY_GUARD)) > 1;
 	bool has_criminal 	<- false update: length(closeby_agents where (each.agent_type = AGENT_TYPE_CRIMINAL)) > 1;
@@ -174,7 +181,7 @@ species FestivalConcert skills: [] {
 	rgb myColor_lightshow <- #green;
 	point location_lightshow <- location;
 	
-	list<MovingFestivalAgent> closeby_agents <- MovingFestivalAgent at_distance(5);
+	list<MovingFestivalAgent> closeby_agents <- [] update: MovingFestivalAgent at_distance(5);
 	bool crowded 		<- false update: length(closeby_agents) > 5;
 	bool has_security 	<- false update: length(closeby_agents where (each.agent_type = AGENT_TYPE_SECURITY_GUARD)) > 1;
 	bool has_criminal 	<- false update: length(closeby_agents where (each.agent_type = AGENT_TYPE_CRIMINAL)) > 1;
@@ -623,19 +630,63 @@ experiment main type: gui {
 		{
 			chart "Happiness" type: series size: {1, 0.5} position: {0, 0}
 			{	
-				data "Avg. Happiness" value: (MovingFestivalAgent sum_of(each.agent_happiness));
-				data "Nr. wasted" value: length(MovingFestivalAgent where (each.old_state["drunkness"] = STATE_DRUNKNESS_WASTED));
-			}
-			
-			chart "Agent Distribution" type: pie size: {1, 0.5} position: {0, 0.5}
-			{
-				data "Normal" 		value: length(MovingFestivalAgent where (each.agent_type = AGENT_TYPE_NORMAL)) color: AGENT_COLORS at AGENT_TYPE_NORMAL;
-				data "Party Lover" 	value: length(MovingFestivalAgent where (each.agent_type = AGENT_TYPE_PARTY_LOVER)) color: AGENT_COLORS at AGENT_TYPE_PARTY_LOVER;
-				data "Criminal" 	value: length(MovingFestivalAgent where (each.agent_type = AGENT_TYPE_CRIMINAL)) color: AGENT_COLORS at AGENT_TYPE_CRIMINAL;
-				data "Journalist" 	value: length(MovingFestivalAgent where (each.agent_type = AGENT_TYPE_JOURNALIST)) color: AGENT_COLORS at AGENT_TYPE_JOURNALIST;
-				data "Security" 	value: length(MovingFestivalAgent where (each.agent_type = AGENT_TYPE_SECURITY_GUARD)) color: AGENT_COLORS at AGENT_TYPE_SECURITY_GUARD;
+				data "Avg. Happiness" value: (MovingFestivalAgent sum_of(each.agent_happiness) / length(MovingFestivalAgent));
+				data "Nr. wasted" value: length(MovingFestivalAgent where (each.old_state["drunkness"] = STATE_DRUNKNESS_WASTED))/2;
 			}
 		}
+		
+		display concerts refresh:every(10.0) {
+			chart "Concert 0 Distribution" type: series size: {1, 0.5} position: {0, 0}
+			{
+				con0 <- FestivalConcert at 0;
+				data "Normal" 		value: length(con0.closeby_agents where (each.agent_type = AGENT_TYPE_NORMAL)) 			color: AGENT_COLORS at AGENT_TYPE_NORMAL;
+				data "Party Lover" 	value: length(con0.closeby_agents where (each.agent_type = AGENT_TYPE_PARTY_LOVER)) 	color: AGENT_COLORS at AGENT_TYPE_PARTY_LOVER;
+				data "Criminal" 	value: length(con0.closeby_agents where (each.agent_type = AGENT_TYPE_CRIMINAL)) 		color: AGENT_COLORS at AGENT_TYPE_CRIMINAL;
+				data "Journalist" 	value: length(con0.closeby_agents where (each.agent_type = AGENT_TYPE_JOURNALIST)) 		color: AGENT_COLORS at AGENT_TYPE_JOURNALIST;
+				data "Security" 	value: length(con0.closeby_agents where (each.agent_type = AGENT_TYPE_SECURITY_GUARD)) 	color: AGENT_COLORS at AGENT_TYPE_SECURITY_GUARD;
+			}
+			chart "Concert 1 Distribution" type: series size: {1, 0.5} position: {0, 0.5}
+			{
+				con1 <- FestivalConcert at 1;
+				data "Normal" 		value: length(con1.closeby_agents where (each.agent_type = AGENT_TYPE_NORMAL)) 			color: AGENT_COLORS at AGENT_TYPE_NORMAL;
+				data "Party Lover" 	value: length(con1.closeby_agents where (each.agent_type = AGENT_TYPE_PARTY_LOVER)) 	color: AGENT_COLORS at AGENT_TYPE_PARTY_LOVER;
+				data "Criminal" 	value: length(con1.closeby_agents where (each.agent_type = AGENT_TYPE_CRIMINAL)) 		color: AGENT_COLORS at AGENT_TYPE_CRIMINAL;
+				data "Journalist" 	value: length(con1.closeby_agents where (each.agent_type = AGENT_TYPE_JOURNALIST)) 		color: AGENT_COLORS at AGENT_TYPE_JOURNALIST;
+				data "Security" 	value: length(con1.closeby_agents where (each.agent_type = AGENT_TYPE_SECURITY_GUARD)) 	color: AGENT_COLORS at AGENT_TYPE_SECURITY_GUARD;
+			}
+		}
+		
+		display bars refresh:every(10.0)
+		{	
+			chart "Bar 0 Distribution" type: series size: {1, 0.33} position: {0, 0}
+			{
+				bar0 <- FestivalBar at 0;
+				data "Normal" 		value: length(bar0.closeby_agents where (each.agent_type = AGENT_TYPE_NORMAL)) 			color: AGENT_COLORS at AGENT_TYPE_NORMAL;
+				data "Party Lover" 	value: length(bar0.closeby_agents where (each.agent_type = AGENT_TYPE_PARTY_LOVER)) 	color: AGENT_COLORS at AGENT_TYPE_PARTY_LOVER;
+				data "Criminal" 	value: length(bar0.closeby_agents where (each.agent_type = AGENT_TYPE_CRIMINAL)) 		color: AGENT_COLORS at AGENT_TYPE_CRIMINAL;
+				data "Journalist" 	value: length(bar0.closeby_agents where (each.agent_type = AGENT_TYPE_JOURNALIST)) 		color: AGENT_COLORS at AGENT_TYPE_JOURNALIST;
+				data "Security" 	value: length(bar0.closeby_agents where (each.agent_type = AGENT_TYPE_SECURITY_GUARD)) 	color: AGENT_COLORS at AGENT_TYPE_SECURITY_GUARD;
+			}
+			chart "Bar 1 Distribution" type: series size: {1, 0.33} position: {0, 0.33}
+			{
+				bar1 <- FestivalBar at 1;
+				data "Normal" 		value: length(bar1.closeby_agents where (each.agent_type = AGENT_TYPE_NORMAL)) 			color: AGENT_COLORS at AGENT_TYPE_NORMAL;
+				data "Party Lover" 	value: length(bar1.closeby_agents where (each.agent_type = AGENT_TYPE_PARTY_LOVER)) 	color: AGENT_COLORS at AGENT_TYPE_PARTY_LOVER;
+				data "Criminal" 	value: length(bar1.closeby_agents where (each.agent_type = AGENT_TYPE_CRIMINAL)) 		color: AGENT_COLORS at AGENT_TYPE_CRIMINAL;
+				data "Journalist" 	value: length(bar1.closeby_agents where (each.agent_type = AGENT_TYPE_JOURNALIST)) 		color: AGENT_COLORS at AGENT_TYPE_JOURNALIST;
+				data "Security" 	value: length(bar1.closeby_agents where (each.agent_type = AGENT_TYPE_SECURITY_GUARD)) 	color: AGENT_COLORS at AGENT_TYPE_SECURITY_GUARD;
+			}
+			chart "Bar 2 Distribution" type: series size: {1, 0.33} position: {0, 0.66}
+			{
+				bar2 <- FestivalBar at 2;
+				data "Normal" 		value: length(bar2.closeby_agents where (each.agent_type = AGENT_TYPE_NORMAL)) 			color: AGENT_COLORS at AGENT_TYPE_NORMAL;
+				data "Party Lover" 	value: length(bar2.closeby_agents where (each.agent_type = AGENT_TYPE_PARTY_LOVER)) 	color: AGENT_COLORS at AGENT_TYPE_PARTY_LOVER;
+				data "Criminal" 	value: length(bar2.closeby_agents where (each.agent_type = AGENT_TYPE_CRIMINAL)) 		color: AGENT_COLORS at AGENT_TYPE_CRIMINAL;
+				data "Journalist" 	value: length(bar2.closeby_agents where (each.agent_type = AGENT_TYPE_JOURNALIST)) 		color: AGENT_COLORS at AGENT_TYPE_JOURNALIST;
+				data "Security" 	value: length(bar2.closeby_agents where (each.agent_type = AGENT_TYPE_SECURITY_GUARD)) 	color: AGENT_COLORS at AGENT_TYPE_SECURITY_GUARD;
+			}
+		}
+		
 		
 		display map type: opengl 
 		{
@@ -644,6 +695,7 @@ experiment main type: gui {
 			species FestivalConcert;
 			species FestivalBar;
 			species MovingFestivalAgent;
+			
 		}
 	}
 }
