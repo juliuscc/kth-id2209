@@ -11,6 +11,8 @@ global {
 	float ALPHA <- 0.2;
 	float GAMMA <- 0.5;
 	
+	float walk_randomness <- 0.2;
+	
 	int AGENT_TYPE_NORMAL 			<- 0;
 	int AGENT_TYPE_PARTY_LOVER 		<- 3;
 	int AGENT_TYPE_CRIMINAL 		<- 1;
@@ -185,6 +187,8 @@ species MovingFestivalAgent skills: [moving] {
 	float 	agent_trait_thirst 		<- rnd(10.0) min: 0.0 max: 10.0 update: agent_trait_thirst + 0.005;
 	float 	agent_trait_drunkness 	<- rnd(10.0) min: 0.0 max: 10.0 update: agent_trait_thirst - 0.005; 
 	int 	agent_trait_fav_music	<- first(1 among MUSIC_CATEGORIES);
+	
+	float agent_happiness <- -10.0 min: 0.0 max: 10.0;
 
 	// Q is a two-dimensions matrix with 8 columns and 192 rows, where each cell is initialized to 0.
 	// Columns represent actions and row represents state.
@@ -259,12 +263,12 @@ species MovingFestivalAgent skills: [moving] {
 			drunkness <- STATE_DRUNKNESS_WASTED;
 		}
 		
-		new_state["in_bar"]             <- (bar_closeby != nil) as int;
-		new_state["likes_music"]        <- likes_music as int;
-		new_state["crowded"]            <- crowded as int;
-		new_state["criminal_danger"]    <- criminal_danger as int;
+		new_state["in_bar"]             <- (bar_closeby != nil) 	as int;
+		new_state["likes_music"]        <- likes_music 				as int;
+		new_state["crowded"]            <- crowded 					as int;
+		new_state["criminal_danger"]    <- criminal_danger 			as int;
 		new_state["thirsty"]            <- (agent_trait_thirst > 5) as int;
-		new_state["party_lover_close"]  <- party_lover_close as int;
+		new_state["party_lover_close"]  <- party_lover_close 		as int;
 		new_state["drunkness"]          <- drunkness;
 		
 		return new_state; 
@@ -291,14 +295,14 @@ species MovingFestivalAgent skills: [moving] {
 		float happiness <- 0.0;
 		
 		if (state["thirsty"] = 1) {
-			happiness <- happiness - 0.5;
+			happiness <- happiness - 2;
 		}
 		
 		if (state["in_bar"] = 1) {
-			happiness <- happiness + 1.0;
+			happiness <- happiness + 3.0;
 		} else if (state["likes_music"] = 1) {
 			if(state["drunkness"] = STATE_DRUNKNESS_BUZZED) {
-				happiness <- happiness + 3.0;
+				happiness <- happiness + 5.0;
 			} else {
 				happiness <- happiness + 1.0;
 			}
@@ -464,7 +468,9 @@ species MovingFestivalAgent skills: [moving] {
 	// behaviour invisible.
 	int choose_action(map<string, int> state) {
 		// Take action from state.
-		if (flip(0.9)) {
+		if (flip(walk_randomness)) {
+			return first(1 among ACTIONS);
+		} else {
 			int row_index <- get_s_index(state);
 			list<float> row <- Q row_at row_index;
 			
@@ -481,10 +487,6 @@ species MovingFestivalAgent skills: [moving] {
 			}
 			
 			return best_index;
-			
-		} else {
-			//TODO: Filter out valid actions.
-			return first(1 among ACTIONS);
 		}
 	}
 	
@@ -524,7 +526,8 @@ species MovingFestivalAgent skills: [moving] {
 		
 		int old_s_index <- get_s_index(old_state);
 		float old_Q <- Q[old_action, old_s_index];
-		float new_Q <- old_Q + ALPHA * (R(old_state, old_action) + (GAMMA * max_Q(state)) - old_Q);
+		agent_happiness <- R(old_state, old_action);
+		float new_Q <- old_Q + ALPHA * (agent_happiness + (GAMMA * max_Q(state)) - old_Q);
 		
 		Q[old_action, old_s_index] <- new_Q; 
 				
@@ -551,6 +554,7 @@ species MovingFestivalAgent skills: [moving] {
 
 
 experiment main type: gui {
+	parameter "Randomness in walk: " var: walk_randomness min: 0.0 max: 1.0;
 	output {
 		display map type: opengl 
 		{
@@ -563,7 +567,7 @@ experiment main type: gui {
 		{
 			chart "Happiness" type: series size: {1, 0.5} position: {0, 0}
 			{	
-//				data "Avg. Happiness" value: (MovingFestivalAgent sum_of(each.agent_current_happiness));
+				data "Avg. Happiness" value: (MovingFestivalAgent sum_of(each.agent_happiness));
 			}
 			
 			chart "Agent Distribution" type: pie size: {1, 0.5} position: {0, 0.5}
