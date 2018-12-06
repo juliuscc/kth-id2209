@@ -100,7 +100,7 @@ global {
 	];
 	
 	list<point> concert_locations <- [
-		{100, 100},
+		{100, 60},
 		{160, 160}
 	];	
 	
@@ -557,13 +557,6 @@ species MovingFestivalAgent skills: [moving] {
 experiment main type: gui {
 	parameter "Randomness in walk: " var: walk_randomness min: 0.0 max: 1.0;
 	output {
-		display map type: opengl 
-		{
-			species FestivalConcert;
-			species FestivalBar;
-			species MovingFestivalAgent;
-		}
-		
 		display chart refresh:every(10.0)
 		{
 			chart "Happiness" type: series size: {1, 0.5} position: {0, 0}
@@ -582,6 +575,12 @@ experiment main type: gui {
 			}
 		}
 		
+		display map type: opengl 
+		{
+			species FestivalConcert;
+			species FestivalBar;
+			species MovingFestivalAgent;
+		}
 	}
 }
 
