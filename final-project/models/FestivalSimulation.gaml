@@ -11,7 +11,7 @@ global {
 	float ALPHA <- 0.2;
 	float GAMMA <- 0.5;
 	
-	float WALK_RANDOMNESS_TRAINING <- 0.7;
+	float WALK_RANDOMNESS_TRAINING <- 0.9;
 	float WALK_RANDOMNESS_SIMULATION <- 0.2;
 	
 	float walk_randomness <- WALK_RANDOMNESS_TRAINING;
@@ -148,10 +148,19 @@ global {
 	int day <- hour * 24;
 	int simulation_time <- day * 3;
 	
-	int training_time <- 30000;
+	int training_step_0 <- 10000;
+	int training_step_1 <- 10000;
+	int training_step_2 <- 10000;
+	int training_time <- training_step_0 + training_step_1 + training_step_2;
 	
-	reflex when: time = training_time {
+	reflex learning when: time = 0 or time = training_step_0 + training_step_1 {
+		walk_randomness <- WALK_RANDOMNESS_TRAINING;
+		write "LEARNING MODE";
+	}
+	
+	reflex simulating when: time = training_step_0 or time = training_step_0 + training_step_1 + training_step_2 {
 		walk_randomness <- WALK_RANDOMNESS_SIMULATION;
+		write "SIMULATION MODE";
 	}
 	
 	reflex t when : cycle >= (training_time + simulation_time) or cycle = training_time {
