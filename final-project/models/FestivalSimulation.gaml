@@ -490,7 +490,7 @@ species MovingFestivalAgent skills: [moving] {
 		}
 	}
 	
-	action execute_action (int agent_action) {
+	action execute_action (int agent_action, bool in_bar) {
 		switch agent_action {
 			match(ACTION_GOTO_CONCERT_0) {
 				target_location <- FestivalConcert[0].location;
@@ -508,12 +508,21 @@ species MovingFestivalAgent skills: [moving] {
 				target_location <- FestivalBar[2].location;
 			}
 			match(ACTION_DRINK_WATER) {
-				agent_trait_thirst <- agent_trait_thirst - 3.0;
-				agent_trait_drunkness <- agent_trait_drunkness - 1;
+				if (in_bar) {
+					agent_trait_thirst <- agent_trait_thirst - 3.0;
+					agent_trait_drunkness <- agent_trait_drunkness - 1;
+				} else {
+					agent_trait_thirst <- agent_trait_thirst - 0.25;
+				}
 			}
 			match(ACTION_DRINK_BEER) {
-				agent_trait_thirst <- agent_trait_thirst - 1.5;
-				agent_trait_drunkness <- agent_trait_drunkness + 2.5;
+				if (in_bar) {
+					agent_trait_thirst <- agent_trait_thirst - 1.5;
+					agent_trait_drunkness <- agent_trait_drunkness + 2.5;	
+				} else {
+					agent_trait_thirst <- agent_trait_thirst - 0.05;
+					agent_trait_drunkness <- agent_trait_drunkness + 0.25;
+				}
 			}
 			match(ACTION_DANCE) {
 				
@@ -530,10 +539,10 @@ species MovingFestivalAgent skills: [moving] {
 		float new_Q <- old_Q + ALPHA * (agent_happiness + (GAMMA * max_Q(state)) - old_Q);
 		
 		Q[old_action, old_s_index] <- new_Q; 
-				
+
 		int agent_action <- choose_action(state);
-		do execute_action(agent_action);
-				
+		do execute_action(agent_action, state["in_bar"] = 1);
+
 		old_state <- state;
 		old_action <- agent_action;
 	}
