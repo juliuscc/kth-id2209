@@ -517,8 +517,6 @@ species MovingFestivalAgent skills: [moving] {
 		return max(row);
 	}
 	
-	//TODO: We should not allow them to do everything everywhere, that would make the 
-	// behaviour invisible.
 	int choose_action(map<string, int> state) {
 		// Take action from state.
 		if (flip(walk_randomness)) {
