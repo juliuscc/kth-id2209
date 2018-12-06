@@ -70,7 +70,7 @@ global {
 	int ACTION_DRINK_BEER 		<- 6;
 	int ACTION_DANCE 			<- 7;
 	
-	int ACTION_COUNT <- length([
+	list<int> ACTIONS <- [
 		ACTION_GOTO_CONCERT_0,
 		ACTION_GOTO_CONCERT_1,
 		ACTION_GOTO_BAR_0,
@@ -79,7 +79,7 @@ global {
 		ACTION_DRINK_WATER,
 		ACTION_DRINK_BEER,
 		ACTION_DANCE
-	]);
+	];
 	
 	map<string, int> default_state <- [
 		"in_bar"			:: 0,
@@ -176,7 +176,7 @@ species FestivalConcert skills: [] {
 }
 
 
-// At least 5 moving agents
+// At least 5 types of  moving agents
 species MovingFestivalAgent skills: [moving] {
 	int agent_type 					<- AGENT_TYPES at rnd_choice(AGENT_DISTRIBUTION);
 	rgb myColor 					<- AGENT_COLORS at agent_type;
@@ -202,7 +202,7 @@ species MovingFestivalAgent skills: [moving] {
 		} 
 		else
 		{
-			do goto target:target_location speed: 5.0;
+			do goto target:target_location speed: 10.0;
 		}
 	}
 
@@ -388,8 +388,9 @@ species MovingFestivalAgent skills: [moving] {
 			happiness <- happiness - 2.0;
 		}
 		
+		// The presense of a security guard 
 		if (state["criminal_danger"] = 1) {
-			happiness <- happiness - 200.0 - (state["drunkness"] * 50);
+			happiness <- happiness - 10.0 - (state["drunkness"] * 10);
 		}
 		
 		if (state["party_lovers_close"] = 1) {
@@ -446,11 +447,7 @@ species MovingFestivalAgent skills: [moving] {
 		}
 		
 		if (state["criminal_danger"] = 1) {
-			happiness <- happiness + 100.0;
-		}
-		
-		if (state["criminal_danger"] = 1) {
-			happiness <- happiness + 100.0;
+			happiness <- happiness + 20.0;
 		}
 		
 		return happiness;
@@ -463,6 +460,8 @@ species MovingFestivalAgent skills: [moving] {
 		return max(row);
 	}
 	
+	//TODO: We should not allow them to do everything everywhere, that would make the 
+	// behaviour invisible.
 	int choose_action(map<string, int> state) {
 		// Take action from state.
 		if (flip(0.9)) {
@@ -481,10 +480,11 @@ species MovingFestivalAgent skills: [moving] {
 				i <- i + 1;
 			}
 			
-			return 0;
+			return best_index;
 			
 		} else {
-			return rnd(ACTION_COUNT);
+			//TODO: Filter out valid actions.
+			return first(1 among ACTIONS);
 		}
 	}
 	
