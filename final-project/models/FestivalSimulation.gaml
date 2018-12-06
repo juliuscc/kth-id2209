@@ -314,35 +314,48 @@ species MovingFestivalAgent skills: [moving] {
 		return new_state; 
 	}
 	
+	float normalize_R(float value) {
+		if (value > 10.0) { return 10;}
+		if (value < -10.0) { return -10;}
+		return value;
+	}
+	
 	// Return the happiness from this agent
 	float R(map<string, int> state, int agent_action) {
+		float r_raw;
 		switch agent_type {
 			match(AGENT_TYPE_NORMAL) {
-				return R_normal(state, agent_action);
+				r_raw <- R_normal(state, agent_action);
 			} match(AGENT_TYPE_PARTY_LOVER) {
-				return R_normal(state, agent_action);
+				r_raw <- R_normal(state, agent_action);
 			} match (AGENT_TYPE_CRIMINAL) {
-				return R_criminal(state, agent_action);
+				r_raw <- R_criminal(state, agent_action);
 			} match (AGENT_TYPE_JOURNALIST) {
-				return R_journalist(state, agent_action);
+				r_raw <- R_journalist(state, agent_action);
 			} match (AGENT_TYPE_SECURITY_GUARD) {
-				return R_security(state, agent_action);
+				r_raw <- R_security(state, agent_action);
 			}
 		}
+		
+		return normalize_R(r_raw);
 	}
 	
 	float R_normal(map<string, int> state, int agent_action) {
 		float happiness <- 0.0;
 		
 		if (state["thirsty"] = 1) {
-			happiness <- happiness - 2;
+			happiness <- happiness - 3;
+			
 		}
 		
 		if (state["in_bar"] = 1) {
-			happiness <- happiness + 3.0;
+			happiness <- happiness + 4.0;
+			if(state["drunkness"] = STATE_DRUNKNESS_BUZZED) {
+				happiness <- happiness + 4.0;
+			}
 		} else if (state["likes_music"] = 1) {
 			if(state["drunkness"] = STATE_DRUNKNESS_BUZZED) {
-				happiness <- happiness + 5.0;
+				happiness <- happiness + 6.0;
 			} else {
 				happiness <- happiness + 1.0;
 			}
@@ -357,11 +370,11 @@ species MovingFestivalAgent skills: [moving] {
 		}
 		
 		if (state["criminal_danger"] = 1) {
-			happiness <- happiness - 2.0;
+			happiness <- happiness - 4.0;
 		}
 		
 		if ((state["party_lovers_close"] = 1) and (state["drunkness"] = STATE_DRUNKNESS_NONE)) {
-			happiness <- happiness - 1.0;
+			happiness <- happiness - 4.0;
 		}
 		
 		return happiness;
@@ -371,7 +384,7 @@ species MovingFestivalAgent skills: [moving] {
 		float happiness <- 0.0;
 		
 		if (state["thirsty"] = 1) {
-			happiness <- happiness - 0.5;
+			happiness <- happiness - 3;
 		}
 		
 		if (state["in_bar"] = 0) {
@@ -379,11 +392,11 @@ species MovingFestivalAgent skills: [moving] {
 		}
 		
 		if (state["crowded"] = 1) {
-			happiness <- happiness + 2.0;
+			happiness <- happiness + 4.0;
 		}
 		
 		if (state["party_lover_close"] = 1) {
-			happiness <- happiness + 0.5;
+			happiness <- happiness + 1;
 		}
 		
 		switch state["drunkness"] {
@@ -407,7 +420,7 @@ species MovingFestivalAgent skills: [moving] {
 		}
 		
 		if (state["criminal_danger"] = 1) {
-			happiness <- happiness + 0.5;
+			happiness <- happiness + 1;
 		}
 		
 		return happiness;
@@ -417,28 +430,28 @@ species MovingFestivalAgent skills: [moving] {
 		float happiness <- 0.0;
 		
 		if (state["thirsty"] = 1) {
-			happiness <- happiness - 1.0;
+			happiness <- happiness - 2.0;
 		}
 		
 		if (state["likes_music"] = 1) {
-			happiness <- happiness + 0.5 + (state["drunkness"] * 1.0);
+			happiness <- happiness + 3 + (state["drunkness"] * 1.5);
 		}
 		
 		if (state["drunkness"] = STATE_DRUNKNESS_BUZZED) {
-			happiness <- happiness + 2.0;
+			happiness <- happiness + 3.0;
 		}
 		
 		if (state["crowded"] = 0) {
-			happiness <- happiness - 2.0;
+			happiness <- happiness - 3.0;
 		}
 		
 		// The presense of a security guard 
 		if (state["criminal_danger"] = 1) {
-			happiness <- happiness - 10.0 - (state["drunkness"] * 10);
+			happiness <- happiness - 7.0 - (state["drunkness"] * 10);
 		}
 		
 		if (state["party_lovers_close"] = 1) {
-			happiness <- happiness + 1.0;
+			happiness <- happiness + 4.0;
 		}
 		
 		return happiness;
@@ -448,27 +461,27 @@ species MovingFestivalAgent skills: [moving] {
 		float happiness <- 0.0;
 		
 		if (state["thirsty"] = 1) {
-			happiness <- happiness - 0.5;
+			happiness <- happiness - 2;
 		}
 		
 		if (state["drunkness"] > STATE_DRUNKNESS_NONE) {
-			happiness <- happiness - (state["drunkness"] * 1.0);
+			happiness <- happiness - (state["drunkness"] * 2.0);
 		}
 		
 		if (state["crowded"] = 1) {
-			happiness <- happiness + 0.3;
+			happiness <- happiness + 2;
 		}
 		
 		if (state["in_bar"] = 0) {
 			if(state["likes_music"] = 1) {
-				happiness <- happiness + 1;				
+				happiness <- happiness + 2;				
 			} else {
-				happiness <- happiness + 1.4;
+				happiness <- happiness + 3;
 			}
 		}
 		
 		if (state["criminal_danger"] = 1) {
-			happiness <- happiness + 2;
+			happiness <- happiness + 5;
 		}
 			
 		return happiness;
@@ -478,20 +491,20 @@ species MovingFestivalAgent skills: [moving] {
 		float happiness <- 0.0;
 		
 		if (state["thirsty"] = 1) {
-			happiness <- happiness - 0.5;
+			happiness <- happiness - 2;
 		}
 		
 		
 		if (state["crowded"] = 1) {
-			happiness <- happiness + 0.5;
+			happiness <- happiness + 2;
 		}
 		
 		if (state["drunkness"] > STATE_DRUNKNESS_NONE) {
-			happiness <- happiness - 50.0;
+			happiness <- happiness - 12;
 		}
 		
 		if (state["criminal_danger"] = 1) {
-			happiness <- happiness + 20.0;
+			happiness <- happiness + 10;
 		}
 		
 		return happiness;
@@ -602,6 +615,7 @@ experiment main type: gui {
 			chart "Happiness" type: series size: {1, 0.5} position: {0, 0}
 			{	
 				data "Avg. Happiness" value: (MovingFestivalAgent sum_of(each.agent_happiness));
+				data "Nr. wasted" value: length(MovingFestivalAgent where (each.old_state["drunkness"] = STATE_DRUNKNESS_WASTED));
 			}
 			
 			chart "Agent Distribution" type: pie size: {1, 0.5} position: {0, 0.5}
@@ -611,7 +625,6 @@ experiment main type: gui {
 				data "Criminal" 	value: length(MovingFestivalAgent where (each.agent_type = AGENT_TYPE_CRIMINAL)) color: AGENT_COLORS at AGENT_TYPE_CRIMINAL;
 				data "Journalist" 	value: length(MovingFestivalAgent where (each.agent_type = AGENT_TYPE_JOURNALIST)) color: AGENT_COLORS at AGENT_TYPE_JOURNALIST;
 				data "Security" 	value: length(MovingFestivalAgent where (each.agent_type = AGENT_TYPE_SECURITY_GUARD)) color: AGENT_COLORS at AGENT_TYPE_SECURITY_GUARD;
-			
 			}
 		}
 		
