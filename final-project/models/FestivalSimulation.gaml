@@ -148,7 +148,8 @@ global {
 	int day <- hour * 24;
 	int simulation_time <- day * 3;
 	
-	int training_time <- 20000;
+	int training_time <- 20000;		// Lots of training
+//	int training_time <- 0;			// No training
 	
 	reflex training when: time = 0 {
 		walk_randomness <- WALK_RANDOMNESS_TRAINING;
@@ -637,13 +638,21 @@ experiment main type: gui {
 //	parameter "Randomness in walk: " var: walk_randomness min: 0.0 max: 1.0;
 	
 	output {
-		display chart refresh:every(50.0)
+		display Drunkness refresh:every(50.0)
 		{
-			chart "Happiness" type: series size: {1, 1} position: {0, 0}
+			chart "Happiness and drunkness" type: series size: {1, 1} position: {0, 0}
 			{	
 				data "Avg. Happiness" value: (MovingFestivalAgent sum_of(each.agent_happiness) / length(MovingFestivalAgent));
 				data "Nr. wasted" value: length(MovingFestivalAgent where (each.old_state["drunkness"] = STATE_DRUNKNESS_WASTED))/2;
 				data "Nr. buzzed" value: length(MovingFestivalAgent where (each.old_state["drunkness"] = STATE_DRUNKNESS_BUZZED))/2;
+			}
+		}
+		
+		display Happiness refresh:every(50.0)
+		{
+			chart "Happiness" type: series size: {1, 1} position: {0, 0}
+			{	
+				data "Avg. Happiness" value: (MovingFestivalAgent sum_of(each.agent_happiness) / length(MovingFestivalAgent));
 			}
 		}
 		
