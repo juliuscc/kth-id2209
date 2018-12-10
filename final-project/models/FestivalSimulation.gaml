@@ -11,7 +11,7 @@ global {
 	float ALPHA <- 0.2;
 	float GAMMA <- 0.5;
 	
-	float WALK_RANDOMNESS_TRAINING <- 0.9;
+	float WALK_RANDOMNESS_TRAINING <- 0.95;
 	float WALK_RANDOMNESS_SIMULATION <- 0.2;
 	
 	float walk_randomness <- WALK_RANDOMNESS_TRAINING;
@@ -148,23 +148,25 @@ global {
 	int day <- hour * 24;
 	int simulation_time <- day * 3;
 	
-	int training_step_0 <- 10000;
-	int training_step_1 <- 10000;
-	int training_step_2 <- 10000;
-	int training_time <- training_step_0 + training_step_1 + training_step_2;
+	int training_time <- 20000;
 	
-	reflex learning when: time = 0 or time = training_step_0 + training_step_1 {
+	reflex training when: time = 0 {
 		walk_randomness <- WALK_RANDOMNESS_TRAINING;
-		write "LEARNING MODE";
+		write "Training agents.";
 	}
 	
-	reflex simulating when: time = training_step_0 or time = training_step_0 + training_step_1 + training_step_2 {
+	reflex simulating when: time = training_time {
+		do pause;
+		
 		walk_randomness <- WALK_RANDOMNESS_SIMULATION;
-		write "SIMULATION MODE";
+		write "Training over and simulation paused.";
+		write "Press play to continue simulation.";
 	}
 	
-	reflex t when : cycle >= (training_time + simulation_time) or cycle = training_time {
+	reflex done when : cycle >= (training_time + simulation_time) {
 		 do pause;
+		 
+		 write "Simulation finished. Three days of festival has passed.";
 	}
 }
 
