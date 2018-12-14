@@ -169,6 +169,18 @@ global {
 		 
 		 write "Simulation finished. Three days of festival has passed.";
 	}
+	
+	list<MovingFestivalAgent> NORMAL_AGENTS <- [];
+	list<MovingFestivalAgent> PARTY_LOVER_AGENTS <- [];
+	list<MovingFestivalAgent> CRIMINAL_AGENTS <- [];
+	list<MovingFestivalAgent> SECURITY_AGENTS <- [];
+	
+	reflex assignments when: time = 1 {
+		NORMAL_AGENTS <- MovingFestivalAgent where (each.agent_type = AGENT_TYPE_NORMAL);
+		PARTY_LOVER_AGENTS <- MovingFestivalAgent where (each.agent_type = AGENT_TYPE_PARTY_LOVER);
+		CRIMINAL_AGENTS <- MovingFestivalAgent where (each.agent_type = AGENT_TYPE_CRIMINAL);
+		SECURITY_AGENTS <- MovingFestivalAgent where (each.agent_type = AGENT_TYPE_SECURITY_GUARD);	
+	}
 }
 
 species FestivalBar skills: [] {
@@ -638,6 +650,18 @@ experiment main type: gui {
 //	parameter "Randomness in walk: " var: walk_randomness min: 0.0 max: 1.0;
 	
 	output {
+		display AgentDistribution
+		{
+			chart "Agent distribution" type: pie size: {1, 1} position: {0, 0}
+			{	
+				data "Normals" value: length(MovingFestivalAgent where (each.agent_type = AGENT_TYPE_NORMAL));
+				data "Party lovers" value: length(MovingFestivalAgent where (each.agent_type = AGENT_TYPE_PARTY_LOVER));
+				data "Criminals" value: length(MovingFestivalAgent where (each.agent_type = AGENT_TYPE_CRIMINAL));
+				data "Security" value: length(MovingFestivalAgent where (each.agent_type = AGENT_TYPE_SECURITY_GUARD));
+				data "Journalists" value: length(MovingFestivalAgent where (each.agent_type = AGENT_TYPE_JOURNALIST));
+			}
+		}
+		
 		display Drunkness refresh:every(50.0)
 		{
 			chart "Happiness and drunkness" type: series size: {1, 1} position: {0, 0}
@@ -653,6 +677,36 @@ experiment main type: gui {
 			chart "Happiness" type: series size: {1, 1} position: {0, 0}
 			{	
 				data "Avg. Happiness" value: (MovingFestivalAgent sum_of(each.agent_happiness) / length(MovingFestivalAgent));
+			}
+		}
+		
+		display Normals refresh:every(50.0) {					
+			chart "Happiness" type: series size: {1, 1} position: {0, 0} {
+				data "Max Happiness" value: (NORMAL_AGENTS max_of(each.agent_happiness));
+				data "Min Happiness" value: (NORMAL_AGENTS min_of(each.agent_happiness));
+				data "Mean Happiness" value: (NORMAL_AGENTS mean_of(each.agent_happiness));
+			}
+		}
+		
+		display PartyLovers refresh:every(50.0) {					
+			chart "Happiness" type: series size: {1, 1} position: {0, 0} {
+				data "Max Happiness" value: (PARTY_LOVER_AGENTS max_of(each.agent_happiness));
+				data "Min Happiness" value: (PARTY_LOVER_AGENTS min_of(each.agent_happiness));
+				data "Mean Happiness" value: (PARTY_LOVER_AGENTS mean_of(each.agent_happiness));
+			}
+		}
+		
+		display CriminalsAndSecurity refresh:every(50.0) {					
+			chart "Criminals" type: series size: {1, 0.5} position: {0, 0} {
+				data "Max Happiness" value: (CRIMINAL_AGENTS max_of(each.agent_happiness));
+				data "Min Happiness" value: (CRIMINAL_AGENTS min_of(each.agent_happiness));
+				data "Mean Happiness" value: (CRIMINAL_AGENTS mean_of(each.agent_happiness));
+			}
+			
+			chart "Security" type: series size: {1, 0.5} position: {0, 0.5} {
+				data "Max Happiness" value: (SECURITY_AGENTS max_of(each.agent_happiness));
+				data "Min Happiness" value: (SECURITY_AGENTS min_of(each.agent_happiness));
+				data "Mean Happiness" value: (SECURITY_AGENTS mean_of(each.agent_happiness));
 			}
 		}
 		
