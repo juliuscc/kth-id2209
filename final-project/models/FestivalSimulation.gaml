@@ -189,7 +189,9 @@ global {
 
 species FestivalBar skills: [] {
 	rgb myColor <- #pink;
-		
+	
+	bool place_closed <- false;
+	
 	list<MovingFestivalAgent> closeby_agents <- [] update: MovingFestivalAgent at_distance(10);
 	bool crowded 		<- false update: length(closeby_agents) > 5;
 	bool has_security 	<- false update: length(closeby_agents where (each.agent_type = AGENT_TYPE_SECURITY_GUARD)) > 1;
@@ -199,7 +201,17 @@ species FestivalBar skills: [] {
 	int music			<- first(1 among MUSIC_CATEGORIES + MUSIC_CATEGORY_NONE);
 	
 	aspect default {
-    	draw cube(10) at: {location.x, location.y, - 8} color: myColor;
+		if (place_closed) {
+			myColor <- rgb(0, 0, 150);
+			draw cube(10) at: {location.x, location.y, - 8} color: myColor;
+			draw cylinder(7, 0.1) at: {location.x + 3, location.y - 2} color: myColor;
+			draw cylinder(8, 0.1) at: {location.x - 3.5, location.y - 2} color: myColor;
+			draw cylinder(6, 0.1) at: {location.x - 1.5, location.y + 4} color: myColor;
+			draw cylinder(6, 0.1) at: {location.x + 2.5, location.y + 6} color: myColor;
+
+		} else {
+    		draw cube(10) at: {location.x, location.y, - 8} color: myColor;
+    	}
     }
 }
 
