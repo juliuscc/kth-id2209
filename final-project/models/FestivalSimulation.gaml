@@ -222,7 +222,7 @@ species FestivalConcert skills: [] {
 	
 	int music			<- first(1 among MUSIC_CATEGORIES);
 	
-	action start_burning 
+	action start_burning
 	{
 		is_burning <- true;
 		place_closed <- true;
@@ -291,8 +291,11 @@ species FestivalConcert skills: [] {
 			draw cylinder(scene_size*1.5, 0.5) at: location_lightshow color: myColor_lightshow;	
 		}
 		
-		
-    	draw cube(scene_size) at: {location.x, location.y, - scene_size + 2} color: myColor;
+		if (place_closed) {
+			draw cube(scene_size) at: {location.x, location.y, - scene_size + 0.5} color: myColor;
+		} else {
+    		draw cube(scene_size) at: {location.x, location.y, - scene_size + 2} color: myColor;	
+    	}
     }
 }
 
