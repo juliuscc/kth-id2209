@@ -311,7 +311,7 @@ species MovingFestivalAgent skills: [moving] {
 
 	// Q is a two-dimensions matrix with 8 columns and 192 rows, where each cell is initialized to 0.
 	// Columns represent actions and row represents state.
-	matrix Q <- 0.0 as_matrix({8, 192});
+	matrix Q <- 0.0 as_matrix({8, 384});
 	map<string, int> old_state <- copy(default_state);
 	int old_action;
 	
