@@ -654,11 +654,11 @@ experiment main type: gui {
 		{
 			chart "Agent distribution" type: pie size: {1, 1} position: {0, 0}
 			{	
-				data "Normals" value: length(MovingFestivalAgent where (each.agent_type = AGENT_TYPE_NORMAL));
-				data "Party lovers" value: length(MovingFestivalAgent where (each.agent_type = AGENT_TYPE_PARTY_LOVER));
-				data "Criminals" value: length(MovingFestivalAgent where (each.agent_type = AGENT_TYPE_CRIMINAL));
-				data "Security" value: length(MovingFestivalAgent where (each.agent_type = AGENT_TYPE_SECURITY_GUARD));
-				data "Journalists" value: length(MovingFestivalAgent where (each.agent_type = AGENT_TYPE_JOURNALIST));
+				data "Normals" value: length(MovingFestivalAgent where (each.agent_type = AGENT_TYPE_NORMAL))			color: AGENT_COLORS at AGENT_TYPE_NORMAL;
+				data "Party lovers" value: length(MovingFestivalAgent where (each.agent_type = AGENT_TYPE_PARTY_LOVER)) color: AGENT_COLORS at AGENT_TYPE_PARTY_LOVER;
+				data "Criminals" value: length(MovingFestivalAgent where (each.agent_type = AGENT_TYPE_CRIMINAL))		color: AGENT_COLORS at AGENT_TYPE_CRIMINAL;
+				data "Security" value: length(MovingFestivalAgent where (each.agent_type = AGENT_TYPE_SECURITY_GUARD))	color: AGENT_COLORS at AGENT_TYPE_SECURITY_GUARD;
+				data "Journalists" value: length(MovingFestivalAgent where (each.agent_type = AGENT_TYPE_JOURNALIST))	color: AGENT_COLORS at AGENT_TYPE_JOURNALIST;
 			}
 		}
 		
