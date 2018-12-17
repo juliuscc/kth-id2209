@@ -149,7 +149,8 @@ global {
 	int day <- hour * 24;
 	int simulation_time <- day * 3;
 	
-	int fire_time <- 1000;
+	int water_time <- 0;
+	int fire_time <- 0;
 	int training_time <- 20000;		// Lots of training
 //	int training_time <- 0;			// No training
 	
@@ -159,6 +160,12 @@ global {
 		}
 	}
 	
+	reflex do_water when: time = water_time {
+		ask FestivalBar at 0 {
+			do start_flooding;
+		}
+	}
+
 	reflex training when: time = 0 {
 		walk_randomness <- WALK_RANDOMNESS_TRAINING;
 		write "Training agents.";
@@ -194,7 +201,9 @@ global {
 species FestivalBar skills: [] {
 	rgb myColor <- #pink;
 	
+	bool is_flooded <- false;
 	bool place_closed <- false;
+	int flood_timeout <- 0 update: flood_timeout - 1 min: 0 max: 100;
 	
 	list<MovingFestivalAgent> closeby_agents <- [] update: MovingFestivalAgent at_distance(10);
 	bool crowded 		<- false update: length(closeby_agents) > 5;
@@ -203,6 +212,20 @@ species FestivalBar skills: [] {
 	bool has_partylover <- false update: length(closeby_agents where (each.agent_type = AGENT_TYPE_PARTY_LOVER)) > 1;
 	
 	int music			<- MUSIC_CATEGORY_NONE;
+	
+	action start_flooding
+	{
+		is_flooded <- true;
+		place_closed <- true;
+		flood_timeout <- 10000;
+	}
+	
+	reflex update_burning when: is_flooded
+	{
+		if (flood_timeout = 0) {
+			is_flooded <- false;
+		}
+	}
 	
 	aspect default {
 		if (place_closed) {
@@ -326,7 +349,7 @@ species MovingFestivalAgent skills: [moving] {
 	float 	agent_trait_drunkness 	<- rnd(10.0) min: -10.0 max: 10.0 update: agent_trait_drunkness - 0.005; 
 	int 	agent_trait_fav_music	<- first(1 among MUSIC_CATEGORIES);
 	
-	float agent_happiness <- -10.0 min: -10.0 max: 10.0;
+	float agent_happiness <- 0.0 max: 10.0;
 
 	// Q is a two-dimensions matrix with 8 columns and 192 rows, where each cell is initialized to 0.
 	// Columns represent actions and row represents state.
@@ -344,7 +367,7 @@ species MovingFestivalAgent skills: [moving] {
 		} 
 		else
 		{
-			do goto target:target_location speed: 10.0;
+			do goto target:target_location speed: 20.0;
 		}
 	}
 
@@ -441,10 +464,11 @@ species MovingFestivalAgent skills: [moving] {
 		}
 		
 		if ((state["place_closed"] as int) = 1) {
-			r_raw <- - 10.0;
+			r_raw <- - 20.0;
 		}
 		
-		return normalize_R(r_raw);
+//		return normalize_R(r_raw);
+		return r_raw;
 	}
 	
 	float R_normal(map<string, int> state, int agent_action) {
@@ -652,7 +676,7 @@ species MovingFestivalAgent skills: [moving] {
 		}
 	}
 	
-	action execute_action (int agent_action, bool in_bar) {
+	action execute_action (int agent_action, bool in_bar, bool place_closed) {
 		switch agent_action {
 			match(ACTION_GOTO_CONCERT_0) {
 				target_location <- FestivalConcert[0].location;
@@ -670,20 +694,24 @@ species MovingFestivalAgent skills: [moving] {
 				target_location <- FestivalBar[2].location;
 			}
 			match(ACTION_DRINK_WATER) {
-				if (in_bar) {
-					agent_trait_thirst <- agent_trait_thirst - 3.0;
-					agent_trait_drunkness <- agent_trait_drunkness - 1;
-				} else {
-					agent_trait_thirst <- agent_trait_thirst - 0.25;
+				if(not place_closed) {
+					if (in_bar) {
+						agent_trait_thirst <- agent_trait_thirst - 3.0;
+						agent_trait_drunkness <- agent_trait_drunkness - 1;
+					} else {
+						agent_trait_thirst <- agent_trait_thirst - 0.25;
+					}	
 				}
 			}
 			match(ACTION_DRINK_BEER) {
-				if (in_bar) {
-					agent_trait_thirst <- agent_trait_thirst - 1.5;
-					agent_trait_drunkness <- agent_trait_drunkness + 2.5;	
-				} else {
-					agent_trait_thirst <- agent_trait_thirst - 0.05;
-					agent_trait_drunkness <- agent_trait_drunkness + 0.25;
+				if(not place_closed) {
+					if (in_bar) {
+						agent_trait_thirst <- agent_trait_thirst - 1.5;
+						agent_trait_drunkness <- agent_trait_drunkness + 2.5;	
+					} else {
+						agent_trait_thirst <- agent_trait_thirst - 0.05;
+						agent_trait_drunkness <- agent_trait_drunkness + 1;
+					}	
 				}
 			}
 			match(ACTION_DANCE) {
@@ -703,7 +731,7 @@ species MovingFestivalAgent skills: [moving] {
 		Q[old_action, old_s_index] <- new_Q; 
 
 		int agent_action <- choose_action(state);
-		do execute_action(agent_action, state["in_bar"] = 1);
+		do execute_action(agent_action, state["in_bar"] = 1, state["place_closed"] = 1);
 
 		old_state <- state;
 		old_action <- agent_action;
