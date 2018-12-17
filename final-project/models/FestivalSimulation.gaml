@@ -11,7 +11,7 @@ global {
 	float ALPHA <- 0.2;
 	float GAMMA <- 0.5;
 	
-	float WALK_RANDOMNESS_TRAINING <- 0.95;
+	float WALK_RANDOMNESS_TRAINING <- 0.85;
 	float WALK_RANDOMNESS_SIMULATION <- 0.2;
 	
 	float walk_randomness <- WALK_RANDOMNESS_TRAINING;
@@ -349,7 +349,7 @@ species MovingFestivalAgent skills: [moving] {
 	float 	agent_trait_drunkness 	<- rnd(10.0) min: -10.0 max: 10.0 update: agent_trait_drunkness - 0.005; 
 	int 	agent_trait_fav_music	<- first(1 among MUSIC_CATEGORIES);
 	
-	float agent_happiness <- 0.0 max: 10.0;
+	float agent_happiness <- 0.0 min: -10.0 max: 10.0;
 
 	// Q is a two-dimensions matrix with 8 columns and 192 rows, where each cell is initialized to 0.
 	// Columns represent actions and row represents state.
@@ -367,7 +367,7 @@ species MovingFestivalAgent skills: [moving] {
 		} 
 		else
 		{
-			do goto target:target_location speed: 20.0;
+			do goto target:target_location speed: 10.0;
 		}
 	}
 
@@ -399,6 +399,7 @@ species MovingFestivalAgent skills: [moving] {
 			likes_music 		<- bar_closeby.music = agent_trait_fav_music;
 			crowded 			<- bar_closeby.crowded;
 			party_lover_close 	<- bar_closeby.has_partylover;
+			place_closed 		<- bar_closeby.place_closed;
 			
 			if (agent_type = AGENT_TYPE_CRIMINAL) {
 				criminal_danger	<- bar_closeby.has_security;
@@ -409,7 +410,7 @@ species MovingFestivalAgent skills: [moving] {
 			likes_music 		<- concert_closeby.music = agent_trait_fav_music;
 			crowded 			<- concert_closeby.crowded;
 			party_lover_close 	<- concert_closeby.has_partylover;
-			place_closed <- concert_closeby.place_closed;
+			place_closed 		<- concert_closeby.place_closed;
 			
 			
 			if (agent_type = AGENT_TYPE_CRIMINAL) {
@@ -453,7 +454,7 @@ species MovingFestivalAgent skills: [moving] {
 			match(AGENT_TYPE_NORMAL) {
 				r_raw <- R_normal(state, agent_action);
 			} match(AGENT_TYPE_PARTY_LOVER) {
-				r_raw <- R_normal(state, agent_action);
+				r_raw <- R_party_lover(state, agent_action);
 			} match (AGENT_TYPE_CRIMINAL) {
 				r_raw <- R_criminal(state, agent_action);
 			} match (AGENT_TYPE_JOURNALIST) {
