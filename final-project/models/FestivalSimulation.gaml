@@ -195,7 +195,7 @@ species FestivalBar skills: [] {
 	int music			<- first(1 among MUSIC_CATEGORIES + MUSIC_CATEGORY_NONE);
 	
 	aspect default {
-    	draw square(10) at: {location.x, location.y} color: myColor;
+    	draw cube(10) at: {location.x, location.y, - 8} color: myColor;
     }
 }
 
@@ -252,8 +252,8 @@ species FestivalConcert skills: [] {
 	}
 	
 	aspect default {		
-		draw circle(scene_size*1.5) at: location_lightshow color: myColor_lightshow;
-    	draw square(10) at: {location.x, location.y} color: myColor;
+		draw cylinder(scene_size*1.5, 0.5) at: location_lightshow color: myColor_lightshow;
+    	draw cube(scene_size) at: {location.x, location.y, - scene_size + 2} color: myColor;
     }
 }
 
