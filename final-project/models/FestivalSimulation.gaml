@@ -93,7 +93,8 @@ global {
 		"criminal_danger"	:: 0,
 		"thirsty"			:: 0,
 		"party_lover_close"	:: 0,
-		"drunkness"			:: 0
+		"drunkness"			:: 0,
+		"place_closed"		:: 0
 	];
 	
 	list<point> bar_locations <- [
@@ -148,8 +149,11 @@ global {
 	int day <- hour * 24;
 	int simulation_time <- day * 3;
 	
+	int fire_time <- 1000;
 	int training_time <- 20000;		// Lots of training
 //	int training_time <- 0;			// No training
+	
+	
 	
 	reflex training when: time = 0 {
 		walk_randomness <- WALK_RANDOMNESS_TRAINING;
@@ -164,7 +168,7 @@ global {
 		write "Press play to continue simulation.";
 	}
 	
-	reflex done when : cycle >= (training_time + simulation_time) {
+	reflex done when : cycle = (training_time + simulation_time) {
 		 do pause;
 		 
 		 write "Simulation finished. Three days of festival has passed.";
@@ -205,6 +209,11 @@ species FestivalConcert skills: [] {
 	rgb myColor_lightshow <- #green;
 	point location_lightshow <- location;
 	
+	bool is_burning <- false;
+	bool place_closed <- false;
+	int fire_rotation <- 0;
+	int burn_timeout <- 0 update: burn_timeout - 1 min: 0 max: 100;
+	
 	list<MovingFestivalAgent> closeby_agents <- [] update: MovingFestivalAgent at_distance(5);
 	bool crowded 		<- false update: length(closeby_agents) > 5;
 	bool has_security 	<- false update: length(closeby_agents where (each.agent_type = AGENT_TYPE_SECURITY_GUARD)) > 1;
@@ -213,9 +222,32 @@ species FestivalConcert skills: [] {
 	
 	int music			<- first(1 among MUSIC_CATEGORIES);
 	
+	action start_burning 
+	{
+		is_burning <- true;
+		place_closed <- true;
+		burn_timeout <- 400;
+	}
+	
+	reflex update_burning when: is_burning
+	{
+		if (burn_timeout = 0) {
+			is_burning <- false;
+		}
+	}
+	
 	reflex update_light_color
 	{
-		if (flip(0.2) or time = 0) {
+		if (is_burning) {
+			if(flip(0.5)) {
+				myColor_lightshow <- #yellow;
+			} else {
+				myColor_lightshow <- #red;
+			}
+			
+			fire_rotation <- rnd(100);
+			 
+		} else if (flip(0.2) or time = 0) {
 			switch music {
 				match MUSIC_CATEGORY_ROCK {
 					if (flip(0.5)) {
@@ -251,8 +283,15 @@ species FestivalConcert skills: [] {
 		}
 	}
 	
-	aspect default {		
-		draw cylinder(scene_size*1.5, 0.5) at: location_lightshow color: myColor_lightshow;
+	aspect default {	
+	
+		if (is_burning) {
+			draw triangle(scene_size*1.5) at: location_lightshow rotate: fire_rotation color: myColor_lightshow;
+		} else {
+			draw cylinder(scene_size*1.5, 0.5) at: location_lightshow color: myColor_lightshow;	
+		}
+		
+		
     	draw cube(scene_size) at: {location.x, location.y, - scene_size + 2} color: myColor;
     }
 }
@@ -293,12 +332,13 @@ species MovingFestivalAgent skills: [moving] {
 	int get_s_index(map<string,int> state) {
 		return (
 			state["in_bar"] 			* 2^0 +
-			state["likes_music"] 		* 2^1 +
-			state["crowded"] 			* 2^2 +
-			state["criminal_danger"]	* 2^3 +
-			state["thirsty"] 			* 2^4 +
-			state["party_lover_close"] 	* 2^5 +
-			state["drunkness"] 			* 2^6 // Drunkness is any value in [0,3] which means that further expansions must be alligned to that
+			state["place_closed"]		* 2^1 +
+			state["likes_music"] 		* 2^2 +
+			state["crowded"] 			* 2^3 +
+			state["criminal_danger"]	* 2^4 +
+			state["thirsty"] 			* 2^5 +
+			state["party_lover_close"] 	* 2^6 +
+			state["drunkness"] 			* 2^7 // Drunkness is any value in [0,3] which means that further expansions must be alligned to that
 		);
 	}
 	
@@ -312,6 +352,7 @@ species MovingFestivalAgent skills: [moving] {
 		bool crowded;
 		bool criminal_danger;
 		bool party_lover_close;
+		bool place_closed;
 		if (bar_closeby != nil) {
 			likes_music 		<- bar_closeby.music = agent_trait_fav_music;
 			crowded 			<- bar_closeby.crowded;
@@ -326,6 +367,8 @@ species MovingFestivalAgent skills: [moving] {
 			likes_music 		<- concert_closeby.music = agent_trait_fav_music;
 			crowded 			<- concert_closeby.crowded;
 			party_lover_close 	<- concert_closeby.has_partylover;
+			place_closed <- concert_closeby.place_closed;
+			
 			
 			if (agent_type = AGENT_TYPE_CRIMINAL) {
 				criminal_danger	<- concert_closeby.has_security;
@@ -344,6 +387,7 @@ species MovingFestivalAgent skills: [moving] {
 		}
 		
 		new_state["in_bar"]             <- (bar_closeby != nil) 	as int;
+		new_state["place_closed"]		<- (place_closed) 			as int;
 		new_state["likes_music"]        <- likes_music 				as int;
 		new_state["crowded"]            <- crowded 					as int;
 		new_state["criminal_danger"]    <- criminal_danger 			as int;
@@ -375,6 +419,10 @@ species MovingFestivalAgent skills: [moving] {
 			} match (AGENT_TYPE_SECURITY_GUARD) {
 				r_raw <- R_security(state, agent_action);
 			}
+		}
+		
+		if ((state["place_closed"] as int) = 1) {
+			r_raw <- - 10.0;
 		}
 		
 		return normalize_R(r_raw);
