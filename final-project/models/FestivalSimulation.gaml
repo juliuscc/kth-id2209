@@ -279,48 +279,50 @@ species FestivalConcert skills: [] {
 	
 	reflex update_light_color
 	{
-		if (is_burning) {
-			if(flip(0.5)) {
-				myColor_lightshow <- #yellow;
+		if (flip(0.2) or time = 0) {
+			if (is_burning) {
+				if(flip(0.5)) {
+					myColor_lightshow <- #yellow;
+				} else {
+					myColor_lightshow <- #red;
+				}
+				
+				fire_rotation <- rnd(100);
+				location_lightshow <- {location.x + rnd(scene_size) - scene_size / 2, location.y + rnd(scene_size) - scene_size / 2};
+				
 			} else {
-				myColor_lightshow <- #red;
+				switch music {
+					match MUSIC_CATEGORY_ROCK {
+						if (flip(0.5)) {
+							myColor_lightshow <- #white;
+						} else {
+							myColor_lightshow <- #gray;
+						}
+					}
+					match MUSIC_CATEGORY_POP {
+						if (flip(0.5)) {
+							myColor_lightshow <- #pink;
+						} else {
+							myColor_lightshow <- #purple;
+						}
+					}
+					match MUSIC_CATEGORY_RAP {
+						if (flip(0.5)) {
+							myColor_lightshow <- #white;
+						} else {
+							myColor_lightshow <- #red;
+						}
+					}
+					match MUSIC_CATEGORY_JAZZ {
+						if (flip(0.5)) {
+							myColor_lightshow <- #yellow;
+						} else {
+							myColor_lightshow <- #brown;
+						}
+					}
+				}
+				location_lightshow <- {location.x + rnd(scene_size) - scene_size / 2, location.y + rnd(scene_size) - scene_size / 2};
 			}
-			
-			fire_rotation <- rnd(100);
-			 
-		} else if (flip(0.2) or time = 0) {
-			switch music {
-				match MUSIC_CATEGORY_ROCK {
-					if (flip(0.5)) {
-						myColor_lightshow <- #white;
-					} else {
-						myColor_lightshow <- #gray;
-					}
-				}
-				match MUSIC_CATEGORY_POP {
-					if (flip(0.5)) {
-						myColor_lightshow <- #pink;
-					} else {
-						myColor_lightshow <- #purple;
-					}
-				}
-				match MUSIC_CATEGORY_RAP {
-					if (flip(0.5)) {
-						myColor_lightshow <- #white;
-					} else {
-						myColor_lightshow <- #red;
-					}
-				}
-				match MUSIC_CATEGORY_JAZZ {
-					if (flip(0.5)) {
-						myColor_lightshow <- #yellow;
-					} else {
-						myColor_lightshow <- #brown;
-					}
-				}
-			}
-			
-			location_lightshow <- {location.x + rnd(scene_size) - scene_size / 2, location.y + rnd(scene_size) - scene_size / 2};
 		}
 	}
 	
