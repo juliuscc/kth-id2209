@@ -268,7 +268,7 @@ species MovingFestivalAgent skills: [moving] {
 	float 	agent_trait_drunkness 	<- rnd(10.0) min: 0.0 max: 10.0 update: agent_trait_drunkness - 0.005; 
 	int 	agent_trait_fav_music	<- first(1 among MUSIC_CATEGORIES);
 	
-	float agent_happiness <- -10.0 min: 0.0 max: 10.0;
+	float agent_happiness <- -10.0 min: -10.0 max: 10.0;
 
 	// Q is a two-dimensions matrix with 8 columns and 192 rows, where each cell is initialized to 0.
 	// Columns represent actions and row represents state.
