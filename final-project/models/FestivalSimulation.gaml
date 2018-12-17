@@ -614,14 +614,14 @@ species MovingFestivalAgent skills: [moving] {
 		
 		if (state["in_bar"] = 0) {
 			if(state["likes_music"] = 1) {
-				happiness <- happiness + 2;				
+				happiness <- happiness + 3;				
 			} else {
-				happiness <- happiness + 3;
+				happiness <- happiness + 7;
 			}
 		}
 		
 		if (state["criminal_danger"] = 1) {
-			happiness <- happiness + 5;
+			happiness <- happiness + 8;
 		}
 			
 		return happiness;
