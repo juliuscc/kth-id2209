@@ -118,6 +118,8 @@ global {
 	// Important that Concert and Bar gets updated before agent as they are used to count agent on location.
 	init
 	{
+		seed <- 5.0;
+		
 		int agent_index <- 0;
 		
 		create FestivalConcert number: length(concert_locations) {
