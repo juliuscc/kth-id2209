@@ -61,4 +61,4 @@ The Q-matrix was updated in every iteration. The new Q-value was calculated from
 > For further details see [LICENSE](LICENSE) file.
 
 [license-img]: https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square
-[license-url]: https://github.com/juliuscc/kth-id2209/blob/master/LICENSE
+[license-url]: /LICENSE
