@@ -1,4 +1,4 @@
-# Machine learning festival simulation
+# Machine Learning Festival Simulation
 
 All the project work in the course ID2209 Distributed Artificial Intelligence and Intelligent Agents on the Royal Institute of Technology (KTH). Among other things, we did a simulation of festival guests and behaviour with the help of reinforcement learning (Q-learning).
 
