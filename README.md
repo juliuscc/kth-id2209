@@ -15,8 +15,8 @@ A screenshot of the map when running the simulation
 The agents happiness over time. The left chart shows their happiness without a training phase. The right chart shows the agents general happiness when training the agents before the simulation. The happiness without training peaks at about 2.5 units while the happiness with training peaks at over 5.5 units.
 
 <p align="center">
-	<img src="images/happiness_notraining.png" width="40%">
-	<img src="images/happiness_training.png" width="40%">
+	<img alt="Graph of general happiness without training" src="images/happiness_notraining.png" width="40%">
+	<img alt="Graph of general happiness with training" src="images/happiness_training.png" width="40%">
 </p>
 
 ## Q-Learning
@@ -24,11 +24,11 @@ The agents happiness over time. The left chart shows their happiness without a t
 The agents had a matrix called Q, that kept track of potential happiness gained from taking particular actions depending on the state of the environment. The rows represent a specific state and the columns represent a specific action.
 
 <p align="center">
-	<img src="images/Q_matrix.svg">
+	<img alt="Q Matrix" src="images/Q_matrix.svg">
 </p>
 
 The Q-matrix was updated in every iteration. The new Q-value was calculated from the old one, the current happiness, as well as the potential happiness gained from taking the most prefered action considering the current state of the environment.
 
 <p align="center">
-	<img width="80%" src="images/Q_new.svg">
+	<img alt="New Q value equation" width="80%" src="images/Q_new.svg">
 </p>
