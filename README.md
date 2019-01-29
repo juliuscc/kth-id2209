@@ -12,8 +12,12 @@ A short report of the project can be found here: [project report](/project-repor
 
 The agents had a matrix called Q, that kept track of potential happiness gained from taking particular actions depending on the state of the environment. The rows represent a specific state and the columns represent a specific action.
 
-![Q Matrix](images/Q_matrix.svg)
+<p align="center">
+	<img src="images/Q_matrix.svg">
+</p>
 
 The Q-matrix was updated in every iteration. The new Q-value was calculated from the old one, the current happiness, as well as the potential happiness gained from taking the most prefered action considering the current state of the environment.
 
-![New Q value formula](images/Q_new.svg)
+<p align="center">
+	<img width="80%" src="images/Q_new.svg">
+</p>
