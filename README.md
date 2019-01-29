@@ -6,7 +6,18 @@ The agents succesfully learned how to create an enjoyable experience. An example
 
 A short report of the project can be found here: [project report](/project-report.pdf)
 
-<!-- ## Screenshots from simulation -->
+## Screenshots from simulation
+
+A screenshot of the map when running the simulation
+
+![Map of simulation](images/map-normal.png)
+
+The agents happiness over time. The left chart shows their happiness without a training phase. The right chart shows the agents general happiness when training the agents before the simulation. The happiness without training peaks at about 2.5 units while the happiness with training peaks at over 5.5 units.
+
+<p align="center">
+	<img src="images/happiness_notraining.png" width="40%">
+	<img src="images/happiness_training.png" width="40%">
+</p>
 
 ## Q-Learning
 
